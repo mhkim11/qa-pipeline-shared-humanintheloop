@@ -1,0 +1,84 @@
+/* 프로그레스 바  */
+.loaderStart{
+  margin-top: 40px;
+  margin-bottom: 40px;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  
+}
+.loader {
+  border: 7px solid #f3f3f3; /* Light grey */
+  border-top: 7px solid #38bcb8;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 2s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.custom-input-wrapper {
+  position: relative;
+  width: 100%;
+  margin: 1em 0;
+}
+
+.custom-input-wrapper input[type="text"] {
+  box-sizing: border-box;
+  width: 10%;
+  height: 3em;
+  margin: 0;
+  padding: 1em;
+  border: 1px solid #ccc;
+  border-radius: 1.5em;
+  background: #fff;
+  outline: none;
+}
+
+.custom-input-wrapper input[type="text"]:focus {
+  border-color: #00bafa;
+}
+
+.custom-input-wrapper input[type="text"]:focus + label,
+.custom-input-wrapper input[type="text"]:valid + label {
+  transform: translate(0, -1.5em) scale(0.9);
+  color: #00bafa;
+}
+
+.custom-input-wrapper input[type="text"]:invalid + label[data-alt]::before {
+  content: attr(data-alt);
+  color: #d9534f;
+}
+
+.custom-input-wrapper label {
+  position: absolute;
+  top: 1.5em;
+  left: 1em;
+  color: #898989;
+  pointer-events: none;
+  transition: all 0.3s ease-in-out;
+}
+
+.custom-input-wrapper label::before {
+  content: attr(data-placeholder); /* data-placeholder 속성을 사용 */
+  background-image: linear-gradient(to bottom, #fff, #fff);
+  background-size: 100% 5px;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* 커스텀 클래스 스타일링 */
+.custom-tooltip {
+  margin-top: 20px;
+  background-color: #EFFBFF !important; /* 원하는 배경색 */
+  color: #111111 !important;             /* 글자색 */
+  max-width: 510px !important;           /* 최대 너비 */
+  padding: 20px !important;             /* 여백 */
+  font-size: 20px !important;
+}
+
+.custom-tooltip::after {
+  border-top-color: #EFFBFF !important; /* 화살표 색상 변경 */
+}

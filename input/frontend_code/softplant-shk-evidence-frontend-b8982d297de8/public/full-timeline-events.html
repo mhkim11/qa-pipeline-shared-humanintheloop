@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>전체 사건 타임라인</title>
+    <style>
+        body {
+            font-family: 'Inter', 'Apple SD Gothic Neo', sans-serif;
+            width: 100vw;
+            height: 100vh;
+            background-color: #ffffff;
+            color: #333;
+            margin: 0;
+            overflow: hidden; /* 페이지 자체 스크롤바 숨기기 */
+        }
+        .page-wrapper {
+             width: 100vw;
+             height: 100vh;
+             overflow: hidden; /* 고정된 뷰포트, 스크롤바 없음 */
+             cursor: grab;
+             user-select: none;
+             position: relative;
+        }
+        .page-wrapper.grabbing {
+            cursor: grabbing;
+        }
+        .zoom-container {
+            transform-origin: top left;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: max-content;
+            height: max-content;
+            min-width: 100%;
+            min-height: 100%;
+            display: block;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            padding-top: 40px;
+        }
+        .tree, .tree ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            display: inline-block;
+        }
+        .tree-wrapper {
+            padding: 40px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        .tree li {
+            position: relative;
+            text-align: left;
+        }
+        .tree li.has-children:not(.collapsed) {
+            display: flex;
+            align-items: center;
+        }
+        .tree li.has-children:not(.collapsed) > ul {
+            padding-left: 60px;
+        }
+        .tree ul li {
+            margin: 20px 0;
+        }
+        .line-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .line-container svg {
+            position: absolute;
+            overflow: visible;
+        }
+        .tree .node {
+            display: inline-flex;
+            align-items: center;
+            padding: 10px;
+            padding-right: 15px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            border: 1px solid #d0d0d0;
+            position: relative;
+            flex-shrink: 0;
+            max-width: 450px; 
+            min-width: 250px; 
+            min-height: 40px; 
+            box-sizing: border-box; 
+        }
+        .tree .node-content {
+             display: inline-flex;
+             align-items: flex-start;
+             width: 100%;
+        }
+        .tree .node-desc {
+            white-space: pre-wrap;
+            text-align: left;
+            padding-left: 5px;
+        }
+        .tree .node-date {
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        .tree .toggle {
+            position: absolute;
+            top: 50%;
+            right: 0;
+            transform: translate(50%, -50%);
+            cursor: pointer;
+            z-index: 10;
+            user-select: none;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            font-size: 14px;
+        }
+        .tree .toggle.collapsed {
+            background-color: #888;
+            color: white;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .tree .toggle.expanded {
+            background-color: transparent;
+            color: #888;
+            font-size: 22px;
+        }
+        .tree .toggle:hover {
+            transform: translate(50%, -50%) scale(1.1);
+        }
+        .tree .toggle.collapsed:hover {
+            background-color: #666;
+        }
+        .tree .toggle.expanded:hover {
+            color: #000;
+        }
+        .tree .child-count {
+            color: #666;
+            font-size: 0.9em;
+            padding-left: 8px;
+            font-weight: normal;
+            white-space: nowrap;
+        }
+        .level-1 > .node { font-size: 14px; font-weight: bold; }
+        .level-2 > .node { font-size: 12px; font-weight: bold; }
+        .level-3 > .node { font-size: 11px; }
+        .level-4 > .node { font-size: 10px; }
+        .level-5 > .node { font-size: 10px; }
+        .tree .collapsed > ul { display: none; }
+        
+        /* Zoom controls */
+        .zoom-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            z-index: 1000;
+        }
+        .zoom-controls button {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 18px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .zoom-controls button:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+        .zoom-level {
+            font-size: 14px;
+            color: #666;
+            min-width: 50px;
+            text-align: center;
+        }
+        
+        /* Context Menu Styles */
+        .context-menu {
+            position: fixed;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            padding: 4px 0;
+            min-width: 180px;
+            z-index: 10000;
+            display: none;
+            font-size: 14px;
+            font-family: 'Inter', 'Apple SD Gothic Neo', sans-serif;
+        }
+        
+        .context-menu-item {
+            padding: 8px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.2s;
+            color: #333;
+        }
+        
+        .context-menu-item:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .context-menu-separator {
+            height: 1px;
+            background-color: #e0e0e0;
+            margin: 4px 0;
+        }
+        
+        .menu-icon {
+            margin-right: 8px;
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+            color: #666;
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="page-wrapper">
+        <div class="zoom-container">
+            <div class="tree-wrapper">
+                <h1>전체 사건 타임라인</h1>
+                
+        <ul class="tree">
+            <li class="level-1">
+                <span class="node"><span class="node-content">전체 사건 타임라인</span></span>
+                <ul>
+<li class="level-2">
+<span class="node"><span class="node-content"><span class="node-date">1. 학교폭력 발생 및 은폐 단계 (1997년 2월 ~ 1998년 6월)</span></span></span>
+<ul>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1997.02.10:</span> <span>문동운, 중원고등학교로 전학</span></span></span>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1997.02.15:</span> <span>박연지, 복도에서 문동운과 부딪힌 것을 계기로 괴롭힘 시작</span></span></span>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1997.02.17:</span> <span>박연지, 복도에서 문동운의 교복 칼라를 잡고 벽으로 밀침</span></span></span>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1997.02.19</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">21:45:00:</span> <span>박연지, 전재중과 통화하며 문동운 책상에 쓰레기 투척 계획 공모</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1997.02.20:</span> <span>피고인들, 문동운의 책상에 쓰레기를 올려놓기 시작</span></span></span>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1997.03.04</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">22:15:00:</span> <span>박연지, 이사랑과 통화하며 목 조르기 폭행 공모</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1997.03.05</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">13:00:00:</span> <span>박연지, 교실에서 문동운의 목을 조르고 침을 뱉어 급성 호흡곤란 등 상해를 입힘</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1997.04.12</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">20:35:00:</span> <span>박연지, 전재중과 통화하며 다리미 화상 사건 공모</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1997.04.13</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">15:30:00:</span> <span>박연지, 교실에서 달군 다리미로 문동운의 등과 팔에 2도 화상을 입힘</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1997.04.27</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">11:00:00:</span> <span>최해정, 박연지, 이사랑, 복도에서 문동운의 머리카락을 잡아당기고 폭행</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1997.05.10</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">15:00:00:</span> <span>전재중, 체육관에서 문동운을 폭행하여 갈비뼈 골절상을 입히고 현금 5만원 갈취</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1997.05.24</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">18:40:00:</span> <span>박연지, 이사랑과 통화하며 화장실 폭행 공모</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1997.05.25</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">11:00:00:</span> <span>박연지, 이사랑, 최해정, 화장실에서 문동운의 머리를 변기에 처박아 외상성 뇌진탕 유발</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1997.06.07</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">15:00:00:</span> <span>이사랑, 미술실에서 달군 금속 붓으로 문동운의 왼팔에 2도 화상을 입힘</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1997.07.21</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">16:30:00:</span> <span>전재중, 손명호, 남자화장실에서 문동운의 옷을 벗기고 성기 부위를 촬영하며 협박</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1997.08.29</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">10:20:00:</span> <span>이사랑, 화장실에서 문동운의 얼굴을 세면대에 부딪치게 하여 코뼈 미세 골절 유발</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1997.08.30:</span> <span>윤소히, 학교폭력을 피해 타 학교로 전학</span></span></span>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1997.09.07</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">14:00:00:</span> <span>박연지, 교실에서 문동운의 머리에 우유를 붓고 다른 학생들에게 침을 뱉도록 강요</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1997.09.12</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">20:30:00:</span> <span>최해정, 이사랑과 통화하며 급식 세제 투입 계획 공모</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1997.09.13</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">12:30:00:</span> <span>최해정, 학교 식당에서 문동운의 급식에 세제를 섞어 급성 위장 장애 유발</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1997.10.11</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">13:00:00:</span> <span>전재중, 운동장 야외 테이블에서 문동운의 머리를 찧어 코뼈 골절 및 앞니 파손 상해를 입힘</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1997.10.28:</span> <span>윤소히, 산부인과에서 임신 5주 4일 진단 받음</span></span></span>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1997.11.03</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">14:30:00:</span> <span>이사랑, 미술실에서 송곳으로 문동운의 손가락을 찔러 7바늘 봉합 수술이 필요한 자상을 입힘</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1997.11.13</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">22:05:00:</span> <span>박연지, 전재중과 통화하며 윤소히와의 만남에 대해 논의</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1997.11.14</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">15:00:00:</span> <span>박연지, 폐건물 옥상에서 윤소히를 밀어 추락사하게 함 (상해치사)</span></span></span>
+</li>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">15:10:00:</span> <span>박연지, 사망한 윤소히의 명찰과 일기장을 챙겨 증거 인멸</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1998.02.08</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">16:00:00:</span> <span>박연지, 학교 뒤편 공터에서 담뱃불로 문동운의 양손등에 2도 화상을 입힘</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1998.03.15</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">14:30:00:</span> <span>전재중, 복도에서 문동운의 머리를 벽에 부딪치게 하고 목을 조름</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1998.03.28</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">15:00:00:</span> <span>최해정, 이사랑, 체육관 탈의실에서 문동운의 옷을 찢고 나체 상태를 촬영하며 협박</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1998.04.17</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">17:00:00:</span> <span>박연지, 손명호, 학교 옥상에서 문동운의 머리카락을 자르고 폭행</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1998.04.18</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">13:40:00:</span> <span>이사랑, 미술실에서 아크릴 물감을 문동운의 눈에 던져 각막 화상을 입힘</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1998.04.20</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">23:45:00:</span> <span>문동운, 학교폭력으로 인한 고통으로 한강 투신 자살 시도 후 응급실 이송</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1998.06.16</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">19:23:00:</span> <span>박연지, 담임교사 김종문과 통화하며 자퇴서 사유 조작 및 금품 제공 논의</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1998.06.17:</span> <span>문동운, 학교폭력을 견디지 못하고 중원고등학교 자퇴
+박연지, 담임교사 김종문에게 500만원을 제공하고 자퇴 사유를 '학교 부적응'으로 조작하여 증거 인멸</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-2">
+<span class="node"><span class="node-content"><span class="node-date">2. 잠복 및 재회 단계 (1998년 7월 ~ 2024년 12월)</span></span></span>
+<ul>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">1998.07.15:</span> <span>문동운, 외상 후 스트레스 장애 등으로 정신과 치료 시작</span></span></span>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2001.03.02:</span> <span>문동운, 서울대학교 건축학과 입학</span></span></span>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2002.08.30:</span> <span>문동운, PTSD 증상 악화로 첫 번째 휴학 신청</span></span></span>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2005.02.25:</span> <span>문동운, 우울증 재발로 두 번째 휴학 신청</span></span></span>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2008.02.25:</span> <span>문동운, 서울대학교 건축학과 졸업</span></span></span>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2020.09.25:</span> <span>이사랑, 메트암페타민 투약 혐의로 기소유예 처분 받음</span></span></span>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2024.03월경:</span> <span>문동운, 세명초등학교 교사로 부임하여 박연지의 딸 하예슬의 담임이 됨</span></span></span>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2024.10.15:</span> <span>이사랑, 마약 판매상 최호진과 첫 메트암페타민 거래</span></span></span>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2024.12.05:</span> <span>김종문, 문동운에게 사죄 이메일 발송</span></span></span>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2024.12.10:</span> <span>박연지, 문동운의 모친 정미희를 찾아가 위협, 문동운 고소 결심</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-2">
+<span class="node"><span class="node-content"><span class="node-date">3. 보복범죄 및 수사 단계 (2024년 12월 ~ 2025년 5월)</span></span></span>
+<ul>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2024.12.15</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">14:30:00:</span> <span>문동운, 서울성동경찰서에 박연지 외 4인에 대한 고소장 제출</span></span></span>
+</li>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">19:35:00:</span> <span>박연지, 전재중과 통화하며 고소 사실 확인 및 대응책 논의 시작</span></span></span>
+</li>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">21:47:00:</span> <span>피고인 4인, 4자 전화회의를 통해 증거인멸 및 보복범죄 공모</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2024.12.20:</span> <span>김종문, 경찰 조사에서 금품수수 및 증거인멸 사실 자백</span></span></span>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2025.01.03:</span> <span>김종문, 가족에게 마지막 이메일 발송</span></span></span>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2025.01.12:</span> <span>김종문, 자택에서 사망한 채 발견 (자살)</span></span></span>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2025.02.10</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">14:00:00:</span> <span>박연지, 스타벅스에서 문동운을 만나 딸을 빌미로 협박</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2025.02.15</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">19:00:00:</span> <span>전재중, 일식당에서 문동운을 만나 2억원의 합의금을 제시하며 협박</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2025.02.20</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">20:00:00:</span> <span>이사랑, 인스타그램에 불타는 여성 그림과 함께 위협적인 글 게시</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2025.02.25</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">14:00:00:</span> <span>최해정, 미피항공 내부 시스템을 이용해 문동운의 출입국 기록 불법 조회</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2025.03.05</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">16:00:00:</span> <span>박연지, 문동운의 모친 정미희에게 현금 5,000만원을 제공하며 고소 취하 종용</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2025.03.10:</span> <span>전재중, 손명호에게 문동운에 대한 미행 및 감시 지시 시작</span></span></span>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2025.03.14:</span> <span>박연지 측 변호사, 증거인멸 목적으로 문동운 측에 증거 사진 원본 제출 요청</span></span></span>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2025.03.15:</span> <span>이사랑, 온라인 커뮤니티에 문동운의 개인정보를 유출하며 허위사실 유포
+박연지, 변호사 사무실에서 전달받은 증거 사진 원본 훼손 시도</span></span></span>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2025.03.18</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">23:00:05:</span> <span>손명호, 발신번호 표시제한으로 문동운에게 '윤소히처럼 될 수 있다'며 협박 전화</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2025.03.20</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">10:40:00:</span> <span>최해정, 인천-오사카 KE721 항공편 기내에서 승무원 지위를 이용해 문동운 협박</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2025.03.25</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">15:30:00:</span> <span>박연지, 세명초등학교를 찾아가 문동운에게 과거 정신병력을 폭로하겠다고 협박</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2025.03.27</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">22:40:00:</span> <span>박연지, 손명호와 통화하며 문동운 자택 침입 및 증거 파기 지시</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2025.03.28</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">11:00:00:</span> <span>전재중, 세명초등학교 학부모 단체 채팅방에 문동운에 대한 허위사실 유포</span></span></span>
+</li>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">14:23:16:</span> <span>박연지, 손명호에게 증거인멸 교사 대가로 3,000만원 송금</span></span></span>
+</li>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">20:22:00:</span> <span>손명호, 문동운 자택 침입 시도 중 현행범으로 체포</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2025.04.02</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">10:00:00:</span> <span>박연지, 교육청 고위 관계자에게 연락하여 문동운의 직위해제 및 해임 청탁</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2025.04.05:</span> <span>문동운, 지속적인 보복범죄로 인한 스트레스로 병가 신청
+이사랑, 개인전에서 문동운을 모욕하는 작품 '고통의 학습' 전시</span></span></span>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2025.04.08</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">09:00:00:</span> <span>최해정, '김지영'이라는 가명으로 교육청에 문동운에 대한 허위 민원 제기</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2025.04.10:</span> <span>이사랑, 마약 판매상 최호진과 마지막 거래</span></span></span>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2025.04.15:</span> <span>이사랑, 마약류 투약 혐의로 긴급 체포
+손명호, 경찰 조사에서 박연지, 전재중의 지시 사실 등 모든 혐의 자백</span></span></span>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2025.04.16:</span> <span>박연지, 상해치사 및 증거인멸 등 혐의로 구속</span></span></span>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2025.04.19</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">21:30:00:</span> <span>박연지, 전재중과 통화하며 손명호의 자백 사실을 확인하고 대책 논의</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2025.04.20</span></span></span>
+<ul>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">00:15:00:</span> <span>손명호, 구속 취소 결정으로 석방</span></span></span>
+</li>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">01:35:00:</span> <span>손명호, 정조골프장 인근 저수지에서 익사체로 발견 (사망 추정 시각)</span></span></span>
+</li>
+<li class="level-4">
+<span class="node"><span class="node-content"><span class="node-date">14:25:00:</span> <span>손명호, 석방 직후 전재중, 박연지와 통화하며 경찰 진술 내용을 알림</span></span></span>
+</li>
+</ul>
+</li>
+<li class="level-3">
+<span class="node"><span class="node-content"><span class="node-date">2025.05.08:</span> <span>검찰, 박연지, 전재중, 이사랑, 최해정 4인에 대한 공소장 법원 제출 (구속기소)</span></span></span>
+</li>
+</ul>
+</li>
+</ul>
+            </li>
+        </ul>
+        
+            </div>
+        </div>
+    </div>
+    <div class="zoom-controls">
+        <button id="zoom-out">−</button>
+        <span class="zoom-level">100%</span>
+        <button id="zoom-in">+</button>
+        <button id="fit-to-view" title="Fit to View">⌖</button>
+    </div>
+    
+    <!-- Context Menu -->
+    <div id="context-menu" class="context-menu">
+        <div class="context-menu-item" data-action="expand-all">
+            <span class="menu-icon">⊞</span> 모두 펼치기
+        </div>
+        <div class="context-menu-item" data-action="collapse-all">
+            <span class="menu-icon">⊟</span> 모두 접기
+        </div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" data-action="expand-children">
+            <span class="menu-icon">⊞</span> 하위 항목 펼치기
+        </div>
+        <div class="context-menu-item" data-action="collapse-children">
+            <span class="menu-icon">⊟</span> 하위 항목 접기
+        </div>
+    </div>
+    
+    <script>
+        // Context menu functionality
+        const contextMenu = document.getElementById('context-menu');
+        let currentContextNode = null;
+        
+        // Reusable expand/collapse functions
+        function expandNode(li) {
+            if (li.classList.contains('has-children') && li.classList.contains('collapsed')) {
+                li.classList.remove('collapsed');
+                const toggle = li.querySelector(':scope > .node > .toggle');
+                if (toggle) {
+                    toggle.classList.remove('collapsed');
+                    toggle.classList.add('expanded');
+                    toggle.textContent = '⊝';
+                }
+                drawLines(li);
+            }
+        }
+        
+        function collapseNode(li) {
+            if (li.classList.contains('has-children') && !li.classList.contains('collapsed')) {
+                li.classList.add('collapsed');
+                const toggle = li.querySelector(':scope > .node > .toggle');
+                if (toggle) {
+                    toggle.classList.add('collapsed');
+                    toggle.classList.remove('expanded');
+                    const childUl = li.querySelector(':scope > ul');
+                    const childCount = childUl ? childUl.children.length : 0;
+                    toggle.textContent = childCount.toString();
+                }
+            }
+        }
+        
+        function expandAll(rootNode = null) {
+            const nodes = rootNode ? 
+                rootNode.querySelectorAll('li.has-children') : 
+                document.querySelectorAll('.tree li.has-children');
+            nodes.forEach(node => expandNode(node));
+            redrawAll(adjustNodeWidths);
+        }
+        
+        function collapseAll(rootNode = null) {
+            const nodes = rootNode ? 
+                rootNode.querySelectorAll('li.has-children') : 
+                document.querySelectorAll('.tree li.has-children');
+            nodes.forEach(node => collapseNode(node));
+            redrawAll(adjustNodeWidths);
+        }
+        
+        function expandChildren(parentNode) {
+            if (parentNode && parentNode.classList.contains('has-children')) {
+                // First expand the parent node
+                expandNode(parentNode);
+                // Then expand all direct children
+                const childUl = parentNode.querySelector(':scope > ul');
+                if (childUl) {
+                    const children = childUl.querySelectorAll(':scope > li.has-children');
+                    children.forEach(child => expandNode(child));
+                }
+                redrawAll(adjustNodeWidths);
+            }
+        }
+        
+        function collapseChildren(parentNode) {
+            if (parentNode && parentNode.classList.contains('has-children')) {
+                // First collapse all children recursively
+                const childUl = parentNode.querySelector(':scope > ul');
+                if (childUl) {
+                    const children = childUl.querySelectorAll('li.has-children');
+                    // Use all descendants, not just direct children
+                    children.forEach(child => collapseNode(child));
+                }
+                // Then collapse the parent node itself
+                collapseNode(parentNode);
+                redrawAll(adjustNodeWidths);
+            }
+        }
+
+        function drawLines(parentLi) {
+            const lineContainer = parentLi.querySelector(':scope > .line-container');
+            if (!lineContainer) return;
+            lineContainer.innerHTML = ''; 
+            if (parentLi.classList.contains('collapsed')) return;
+            
+            const parentNode = parentLi.querySelector(':scope > .node');
+            const childUl = parentLi.querySelector(':scope > ul');
+            if (!parentNode || !childUl) return;
+            
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svg = document.createElementNS(svgNS, 'svg');
+            svg.style.position = 'absolute';
+            svg.style.width = '100%';
+            svg.style.height = '100%';
+            svg.style.left = '0';
+            svg.style.top = '0';
+            svg.style.overflow = 'visible';
+            svg.style.pointerEvents = 'none';
+            
+            const containerRect = lineContainer.getBoundingClientRect();
+            
+            svg.setAttribute('viewBox', `0 0 ${containerRect.width} ${containerRect.height}`);
+            svg.setAttribute('preserveAspectRatio', 'none');
+            
+            const parentRect = parentNode.getBoundingClientRect();
+            const startX = parentRect.right - containerRect.left;
+            const startY = parentRect.top - containerRect.top + parentRect.height / 2;
+            
+            const childItems = parentLi.querySelectorAll(':scope > ul > li');
+            childItems.forEach(childLi => {
+                const childNode = childLi.querySelector(':scope > .node');
+                if (!childNode) return;
+                
+                const childRect = childNode.getBoundingClientRect();
+                const endX = childRect.left - containerRect.left;
+                const endY = childRect.top - containerRect.top + childRect.height / 2;
+                
+                const controlX1 = startX + (endX - startX) / 2;
+                const controlY1 = startY;
+                const controlX2 = startX + (endX - startX) / 2;
+                const controlY2 = endY;
+                
+                const pathD = `M ${startX} ${startY} C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${endX} ${endY}`;
+                
+                const path = document.createElementNS(svgNS, 'path');
+                path.setAttribute('d', pathD);
+                path.setAttribute('fill', 'none');
+                path.setAttribute('stroke', '#ccc');
+                path.setAttribute('stroke-width', '3');
+                
+                svg.appendChild(path);
+            });
+            
+            lineContainer.appendChild(svg);
+        }
+
+        function adjustNodeWidths() {
+            const levels = {};
+            document.querySelectorAll('.tree li[class*="level-"]').forEach(li => {
+                const levelMatch = li.className.match(/level-(\d+)/);
+                if (levelMatch) {
+                    const level = levelMatch[1];
+                    const node = li.querySelector(':scope > .node');
+                    if (node && node.offsetParent !== null) {
+                        if (!levels[level]) levels[level] = [];
+                        levels[level].push(node);
+                    }
+                }
+            });
+            for (const level in levels) {
+                const nodesInLevel = levels[level];
+                nodesInLevel.forEach(node => node.style.width = 'auto');
+                let maxWidth = 0;
+                nodesInLevel.forEach(node => {
+                    const nodeWidth = node.getBoundingClientRect().width;
+                    if (nodeWidth > maxWidth) maxWidth = nodeWidth;
+                });
+                const finalWidth = Math.min(maxWidth, 450);
+                nodesInLevel.forEach(node => node.style.width = `${finalWidth}px`);
+            }
+        }
+
+        function redrawAll(callback) {
+            if(callback) callback();
+            const allParents = document.querySelectorAll('.tree li.has-children');
+            allParents.forEach(li => drawLines(li));
+        }
+        document.querySelectorAll('.tree li').forEach(li => {
+            const childUl = li.querySelector(':scope > ul');
+            if (childUl) {
+                li.classList.add('has-children');
+                const lineContainer = document.createElement('div');
+                lineContainer.className = 'line-container';
+                li.appendChild(lineContainer);
+                const nodeSpan = li.querySelector(':scope > .node');
+                const contentSpan = nodeSpan.querySelector('.node-content');
+                if (!nodeSpan.querySelector('.toggle')) {
+                    const toggleSpan = document.createElement('span');
+                    toggleSpan.className = 'toggle collapsed';
+                    const childCount = childUl.children.length;
+                    toggleSpan.textContent = childCount.toString(); 
+                    nodeSpan.appendChild(toggleSpan);
+                }
+            }
+        });
+        document.querySelectorAll('.tree .toggle').forEach(toggle => {
+             toggle.addEventListener('click', (e) => {
+                e.stopPropagation(); 
+                const parentLi = e.currentTarget.closest('li');
+                if (parentLi.classList.contains('collapsed')) {
+                    expandNode(parentLi);
+                } else {
+                    collapseNode(parentLi);
+                }
+                redrawAll(adjustNodeWidths);
+            });
+        });
+        document.querySelectorAll('.tree li.has-children').forEach(li => {
+            li.classList.add('collapsed');
+        });
+        adjustNodeWidths();
+        
+        const ele = document.querySelector('.page-wrapper');
+        const zoomContainer = document.querySelector('.zoom-container');
+        let pos = { top: 0, left: 0, x: 0, y: 0 };
+        let isDragging = false;
+        let panX = 0;
+        let panY = 0;
+        let currentZoom = 1;
+
+        function updateTransform() {
+            const transform = `translate(${panX}px, ${panY}px) scale(${currentZoom})`;
+            zoomContainer.style.transform = transform;
+        }
+
+        const mouseDownHandler = function (e) {
+            if (e.button !== 0) return; // Only allow left-click for dragging
+            if (e.target.classList.contains('toggle')) return;
+            
+            ele.classList.add('grabbing');
+            pos = { left: panX, top: panY, x: e.clientX, y: e.clientY };
+            isDragging = true;
+            ele.addEventListener('mousemove', mouseMoveHandler);
+            ele.addEventListener('mouseup', mouseUpHandler);
+            ele.addEventListener('mouseleave', mouseUpHandler);
+        };
+        const mouseMoveHandler = function (e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            const dx = e.clientX - pos.x;
+            const dy = e.clientY - pos.y;
+            panX = pos.left + dx;
+            panY = pos.top + dy;
+            updateTransform();
+        };
+        const mouseUpHandler = function () {
+            isDragging = false;
+            ele.classList.remove('grabbing');
+            ele.removeEventListener('mousemove', mouseMoveHandler);
+            ele.removeEventListener('mouseup', mouseUpHandler);
+            ele.removeEventListener('mouseleave', mouseUpHandler);
+        };
+        ele.addEventListener('mousedown', mouseDownHandler);
+        // Context menu event handlers
+        document.addEventListener('contextmenu', function (e) {
+            // Check if the click is within the page wrapper
+            if (!ele.contains(e.target)) return;
+            
+            e.preventDefault(); // Prevent default browser context menu
+            
+            if (isDragging) return;
+            
+            // Check if the click was on a node element
+            const clickedNode = e.target.closest('.node');
+            currentContextNode = clickedNode;
+            
+            // Position and show the context menu
+            contextMenu.style.left = e.clientX + 'px';
+            contextMenu.style.top = e.clientY + 'px';
+            contextMenu.style.display = 'block';
+            
+            // Get menu items and separator
+            const expandChildrenItem = contextMenu.querySelector('[data-action="expand-children"]');
+            const collapseChildrenItem = contextMenu.querySelector('[data-action="collapse-children"]');
+            const separator = contextMenu.querySelector('.context-menu-separator');
+            
+            // Show all options only when clicking on a node
+            if (clickedNode) {
+                // Show separator and children options
+                separator.style.display = 'block';
+                expandChildrenItem.style.display = 'flex';
+                collapseChildrenItem.style.display = 'flex';
+                
+                // Only enable children options if the node has children
+                const parentLi = clickedNode.closest('li');
+                if (!parentLi || !parentLi.classList.contains('has-children')) {
+                    expandChildrenItem.style.opacity = '0.5';
+                    expandChildrenItem.style.pointerEvents = 'none';
+                    collapseChildrenItem.style.opacity = '0.5';
+                    collapseChildrenItem.style.pointerEvents = 'none';
+                } else {
+                    expandChildrenItem.style.opacity = '1';
+                    expandChildrenItem.style.pointerEvents = 'auto';
+                    collapseChildrenItem.style.opacity = '1';
+                    collapseChildrenItem.style.pointerEvents = 'auto';
+                }
+            } else {
+                // Hide separator and children options when not clicking on a node
+                separator.style.display = 'none';
+                expandChildrenItem.style.display = 'none';
+                collapseChildrenItem.style.display = 'none';
+            }
+        });
+        
+        // Hide context menu when clicking elsewhere
+        document.addEventListener('click', function(e) {
+            if (!contextMenu.contains(e.target)) {
+                contextMenu.style.display = 'none';
+            }
+        });
+        
+        // Handle context menu item clicks
+        contextMenu.addEventListener('click', function(e) {
+            const action = e.target.closest('.context-menu-item')?.dataset.action;
+            if (!action) return;
+            
+            switch(action) {
+                case 'expand-all':
+                    expandAll();
+                    break;
+                case 'collapse-all':
+                    collapseAll();
+                    break;
+                case 'expand-children':
+                    if (currentContextNode) {
+                        const parentLi = currentContextNode.closest('li');
+                        if (parentLi) expandChildren(parentLi);
+                    }
+                    break;
+                case 'collapse-children':
+                    if (currentContextNode) {
+                        const parentLi = currentContextNode.closest('li');
+                        if (parentLi) collapseChildren(parentLi);
+                    }
+                    break;
+            }
+            
+            contextMenu.style.display = 'none';
+        });
+
+        window.addEventListener('resize', () => redrawAll(adjustNodeWidths));
+        
+        const minZoom = 0.25;
+        const maxZoom = 3;
+        const zoomStep = 0.1;
+        
+        const pageWrapper = document.querySelector('.page-wrapper');
+        const zoomLevelDisplay = document.querySelector('.zoom-level');
+        const zoomInBtn = document.getElementById('zoom-in');
+        const zoomOutBtn = document.getElementById('zoom-out');
+        const fitToViewBtn = document.getElementById('fit-to-view');
+        
+        updateTransform();
+        
+        function updateZoom(newZoom) {
+            currentZoom = Math.max(minZoom, Math.min(maxZoom, newZoom));
+            updateTransform();
+            zoomLevelDisplay.textContent = `${Math.round(currentZoom * 100)}%`;
+            
+            zoomOutBtn.disabled = currentZoom <= minZoom;
+            zoomInBtn.disabled = currentZoom >= maxZoom;
+        }
+
+        function zoomAtMouse(newZoom, clientX, clientY) {
+            const clampedZoom = Math.max(minZoom, Math.min(maxZoom, newZoom));
+            
+            if (clampedZoom === currentZoom) return;
+            
+            const rect = pageWrapper.getBoundingClientRect();
+            const mouseX = clientX - rect.left;
+            const mouseY = clientY - rect.top;
+            
+            const worldX = (mouseX - panX) / currentZoom;
+            const worldY = (mouseY - panY) / currentZoom;
+            
+            const oldZoom = currentZoom;
+            currentZoom = clampedZoom;
+            
+            panX = mouseX - (worldX * currentZoom);
+            panY = mouseY - (worldY * currentZoom);
+            
+            updateTransform();
+            zoomLevelDisplay.textContent = `${Math.round(currentZoom * 100)}%`;
+            
+            zoomOutBtn.disabled = currentZoom <= minZoom;
+            zoomInBtn.disabled = currentZoom >= maxZoom;
+        }
+        
+        function fitToView() {
+            const treeWrapper = document.querySelector('.tree-wrapper');
+            if (!treeWrapper) return;
+            
+            const originalTransform = zoomContainer.style.transform;
+            zoomContainer.style.transform = 'none';
+            
+            setTimeout(() => {
+                redrawAll(adjustNodeWidths);
+                
+                const treeWrapperRect = treeWrapper.getBoundingClientRect();
+                const containerRect = pageWrapper.getBoundingClientRect();
+                
+                zoomContainer.style.transform = originalTransform;
+                
+                const margin = 20; // 모든 방향에 50px 여백
+                const availableWidth = containerRect.width - margin;
+                const availableHeight = containerRect.height - margin - 80; // 줌 컨트롤 및 하단 여백
+                
+                const visibleContentWidth = treeWrapperRect.width;
+                const visibleContentHeight = treeWrapperRect.height;
+                
+                const scaleToFitWidth = availableWidth / visibleContentWidth;
+                const scaleToFitHeight = availableHeight / visibleContentHeight;
+                const optimalZoom = Math.min(scaleToFitWidth, scaleToFitHeight, maxZoom);
+                const finalZoom = Math.max(optimalZoom, minZoom);
+                
+                const scaledContentWidth = visibleContentWidth * finalZoom;
+                const scaledContentHeight = visibleContentHeight * finalZoom;
+                
+                const centerX = (containerRect.width - scaledContentWidth) / 2;
+                const centerY = (containerRect.height - scaledContentHeight) / 2;
+                
+                currentZoom = finalZoom;
+                panX = centerX;
+                panY = centerY;
+                
+                updateTransform();
+                zoomLevelDisplay.textContent = `${Math.round(currentZoom * 100)}%`;
+                
+                zoomOutBtn.disabled = currentZoom <= minZoom;
+                zoomInBtn.disabled = currentZoom >= maxZoom;
+                
+                setTimeout(() => redrawAll(adjustNodeWidths), 10);
+            }, 10);
+        }
+        
+        zoomInBtn.addEventListener('click', () => {
+            updateZoom(currentZoom + zoomStep);
+        });
+        
+        zoomOutBtn.addEventListener('click', () => {
+            updateZoom(currentZoom - zoomStep);
+        });
+        
+        fitToViewBtn.addEventListener('click', () => {
+            fitToView();
+        });
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === '+' || e.key === '=') {
+                    e.preventDefault();
+                    updateZoom(currentZoom + zoomStep);
+                } else if (e.key === '-') {
+                    e.preventDefault();
+                    updateZoom(currentZoom - zoomStep);
+                } else if (e.key === '0') {
+                    e.preventDefault();
+                    updateZoom(1);
+                } else if (e.key === 'f' || e.key === 'F') {
+                    e.preventDefault();
+                    fitToView();
+                }
+            }
+        });
+        
+        pageWrapper.addEventListener('wheel', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? -zoomStep : zoomStep;
+                const newZoom = currentZoom + delta;
+                zoomAtMouse(newZoom, e.clientX, e.clientY);
+            }
+        });
+    </script>
+</body>
+</html>
+    

@@ -1,0 +1,36 @@
+/* TinyMCE 외부 UI (툴바) 스타일 */
+
+/* 에디터 포커스 보더 제거 */
+.tox .tox-edit-area::before {
+  border: none;
+}
+
+.tox .tox-menubar + .tox-toolbar,
+.tox .tox-menubar + .tox-toolbar-overlord {
+  display: flex;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* 1행 툴바 */
+.tox .tox-menubar {
+  background-color: transparent;
+}
+
+.tox:not(.tox-tinymce-inline) .tox-editor-header {
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.tox .tox-mbtn {
+  background-color: transparent;
+}
+
+.tox .tox-mbtn__select-label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.tox .tox-promotion {
+  background-color: transparent;
+}

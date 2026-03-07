@@ -1,0 +1,31 @@
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200
+
+# explicit commands for building the site
+# and the folder to publish
+[build]
+command = "npm run build"
+publish = "dist"
+
+[build.environment]
+# cache Cypress binary in local "node_modules" folder
+# so Netlify caches it
+CYPRESS_CACHE_FOLDER = "./node_modules/CypressBinary"
+# set TERM variable for terminal output
+TERM = "xterm"
+
+[[plugins]]
+# runs Cypress tests against the deployed URL
+package = "netlify-plugin-cypress"
+
+[[plugins]]
+package = "@netlify/plugin-lighthouse"
+
+# optional, deploy the lighthouse report to a path under your site
+[plugins.inputs.audits]
+output_path = "reports/lighthouse.html"
+
+[plugins.inputs.settings]
+preset = "desktop" # Optionally run Lighthouse using a desktop configuration

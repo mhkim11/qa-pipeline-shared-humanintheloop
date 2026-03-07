@@ -1,0 +1,126 @@
+@font-face {
+  font-family: 'Pretendard-ExtraBold';
+  src:
+    url('../assets/fonts/Pretendard-ExtraBold.subset.woff2') format('woff2'),
+    url('../assets/fonts/Pretendard-ExtraBold.otf') format('woff'),
+    url('../assets/fonts/Pretendard-ExtraBold.woff') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Pretendard';
+  src:
+    url('../assets/fonts/Pretendard-Bold.otf') format('woff2'),
+    url('../assets/fonts/Pretendard-Bold.subset.woff2') format('woff'),
+    url('../assets/fonts/Pretendard-Bold.subset.woff2') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Pretendard';
+  font-display: block;
+  font-weight: 700;
+  src: url('../assets/fonts/Pretendard-SemiBold.subset.woff2');
+  src: url('../assets/fonts/Pretendard-SemiBold.woff');
+}
+
+@font-face {
+  font-family: 'Pretendard-Medium';
+  font-display: block;
+  font-weight: 600;
+  src: url('../assets/fonts/Pretendard-Medium.subset.woff2');
+}
+
+@font-face {
+  font-family: 'Pretendard';
+  font-display: block;
+  font-weight: 400;
+  src: url('../assets/fonts/Pretendard-Regular.subset.woff2');
+}
+
+@font-face {
+  font-family: 'Pretendard-Thin';
+  font-display: block;
+  font-weight: 100;
+  src: url('../assets/fonts/Pretendard-Thin.subset.woff2');
+}
+
+@font-face {
+  font-family: 'Pretendard-Light';
+  font-display: block;
+  font-weight: 300;
+  src: url('../assets/fonts/Pretendard-Light.subset.woff2');
+}
+
+@font-face {
+  font-family: 'Pretendard-ExtraLight';
+  font-display: block;
+  font-weight: 200;
+  src: url('../assets/fonts/Pretendard-ExtraLight.subset.woff2');
+}
+
+/* 폰트 weight로만 제어할 수 있도록 선언 */
+/* Pretendard */
+@font-face {
+  font-family: 'Pretendard';
+  font-display: block;
+  font-weight: 700;
+  src: url('../assets/fonts/Pretendard-Bold.subset.woff2');
+  src: url('../assets/fonts/Pretendard-Bold.woff');
+}
+
+@font-face {
+  font-family: 'Pretendard';
+  font-display: block;
+  font-weight: 600;
+  src: url('../assets/fonts/Pretendard-SemiBold.subset.woff2');
+  src: url('../assets/fonts/Pretendard-SemiBold.woff');
+}
+
+@font-face {
+  font-family: 'Pretendard';
+  font-display: block;
+  font-weight: 500;
+  src: url('../assets/fonts/Pretendard-Medium.subset.woff2');
+  src: url('../assets/fonts/Pretendard-Medium.woff');
+}
+
+@font-face {
+  font-family: 'Pretendard';
+  font-display: block;
+  font-weight: 400;
+  src: url('../assets/fonts/Pretendard-Regular.subset.woff2');
+  src: url('../assets/fonts/Pretendard-Regular.woff');
+}
+
+@font-face {
+  font-family: 'Pretendard';
+  font-display: block;
+  font-weight: 300;
+  src: url('../assets/fonts/Pretendard-Light.subset.woff2');
+  src: url('../assets/fonts/Pretendard-Light.woff');
+}
+
+@font-face {
+  font-family: 'Pretendard';
+  font-display: block;
+  font-weight: 200;
+  src: url('../assets/fonts/Pretendard-ExtraLight.subset.woff2');
+  src: url('../assets/fonts/Pretendard-ExtraLight.woff');
+}
+
+@font-face {
+  font-family: 'Pretendard';
+  font-display: block;
+  font-weight: 100;
+  src: url('../assets/fonts/Pretendard-Thin.subset.woff2');
+  src: url('../assets/fonts/Pretendard-Thin.woff');
+}
+
+@font-face {
+  font-family: 'Apple SD Gothic Neo';
+  font-display: block;
+  font-weight: 300;
+  src: local('Apple SD Gothic Neo');
+}

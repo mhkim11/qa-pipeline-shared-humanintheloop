@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "types": ["cypress"],
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "typeRoots": ["node_modules/@types", "cypress/type"],
+    "jsx": "react-jsx"
+  },
+  "include": ["../node_modules/cypress", "./**/*.ts", "./**/*.tsx"]
+}

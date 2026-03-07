@@ -1,0 +1,87 @@
+시나리오ID,화면ID,화면명,경로,시나리오유형,시나리오명,전제조건,테스트단계,기대결과,우선순위
+TC-00-01,SCR-00,로그인,/,Happy Path,정상 로그인,"스테이징 계정: test2026@softplant.co.kr / softplant1234!","1. https://staging.ailex.co.kr 접속
+2. 이메일: test2026@softplant.co.kr 입력
+3. 비밀번호: softplant1234! 입력
+4. 로그인 버튼 클릭",홈(/) 또는 사건목록 화면으로 리다이렉트,High
+TC-00-02,SCR-00,로그인,/,예외,잘못된 비밀번호 로그인,"스테이징 계정 존재","1. 이메일: test2026@softplant.co.kr 입력
+2. 비밀번호: 틀린값 입력
+3. 로그인 버튼 클릭","토스트 메시지 '비밀번호가 일치하지 않습니다.' 표시, 로그인 차단",High
+TC-00-03,SCR-00,로그인,/,예외,미가입 이메일로 로그인 시도,"","1. 이메일: notexist@test.com 입력
+2. 비밀번호 입력란 클릭(focus)","이메일 입력란 하단에 '가입되지 않은 이메일입니다. 회원가입을 진행해주세요.' 메시지 표시",High
+TC-00-04,SCR-00,로그인,/,Happy Path,아이디 저장 기능,"스테이징 계정 존재","1. 이메일 입력 후 '아이디 저장' 체크
+2. 로그인 → 로그아웃
+3. / 재접속","이메일 자동 입력, 체크박스 선택 유지",Medium
+TC-00-05,SCR-00,로그인,/,Happy Path,Enter 키로 로그인,"스테이징 계정 존재","1. 이메일 입력
+2. 비밀번호 입력 후 Enter",로그인 성공 및 홈 이동,Medium
+TC-00-06,SCR-00,로그인,/,비정상,빈 폼 상태에서 버튼 비활성 확인,"","1. / 접속
+2. 이메일/비밀번호 미입력 상태 확인","로그인 버튼 회색(비활성) 상태 유지",High
+TC-00-07,SCR-00,로그인,/,Happy Path,회원가입 버튼 이동,"","1. '회원가입' 버튼 클릭",/register 이동,Medium
+TC-00-08,SCR-00,로그인,/,Happy Path,아이디 찾기 이동,"","1. '아이디 찾기' 클릭",/find_id 이동,Low
+TC-00-09,SCR-00,로그인,/,Happy Path,비밀번호 재설정 이동,"","1. '비밀번호 재설정' 클릭",/find_id?tab=pw 이동,Low
+TC-LOGOUT-01,SCR-00,로그아웃,/logout,Happy Path,로그아웃,"로그인 완료","1. 로그아웃 버튼 클릭","세션 초기화, 로그인 화면(/) 이동",High
+TC-10-01,SCR-10,민사사건_기록목록,/case-list,Happy Path,기록 목록 진입 - 사건 있음,"로그인 완료","1. https://staging.ailex.co.kr/case-list?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG&tab=list 접속
+2. 기록 목록 확인","민사 사건등록테스트 250225의 문서 기록 목록 표시 (Figma: SCR-CASE-01)",High
+TC-10-02,SCR-10,민사사건_기록목록,/case-list,Happy Path,특정 문서 열람,"로그인 완료 + 기록 목록 진입","1. 기록 목록에서 문서 행 클릭
+2. 문서 뷰어 패널 열림 확인","우측 문서 뷰어 패널에 PDF 렌더링 (Figma: SCR-CASE-05)",High
+TC-10-03,SCR-10,민사사건_기록목록,/case-list,Happy Path,기록목록 키워드 검색,"로그인 완료 + 기록 목록 진입","1. 검색창에 키워드 입력
+2. 결과 확인","키워드 포함 문서 필터링 표시 (Figma: SCR-CASE-02)",High
+TC-10-04,SCR-10,민사사건_기록목록,/case-list,Happy Path,파워검색,"로그인 완료 + 기록 목록 진입","1. 파워검색 버튼 클릭
+2. 검색 조건 설정 및 검색","파워검색 다이얼로그 표시 → 필터 결과 (Figma: SCR-CASE-04)",High
+TC-10-05,SCR-10,민사사건_기록목록,/case-list,Happy Path,문서 하이라이트 추가,"로그인 완료 + 문서 열람 중","1. 뷰어에서 텍스트 드래그 선택
+2. 하이라이트 추가","선택 영역 하이라이트 표시 (Figma: SCR-CASE-06)",High
+TC-10-06,SCR-10,민사사건_기록목록,/case-list,Happy Path,메모 추가 및 전체 메모 확인,"로그인 완료 + 문서 열람 중","1. 문서에 메모 추가
+2. '전체 메모' 패널 열기","메모 목록 패널에 추가된 메모 표시 (Figma: SCR-CASE-07)",High
+TC-10-07,SCR-10,민사사건_기록목록,/case-list,Happy Path,검색 결과에서 문서 열람 + 메모,"로그인 완료 + 검색 결과 있음","1. 검색 후 결과 문서 클릭
+2. 뷰어에서 메모 추가","검색 하이라이트 유지된 상태로 뷰어 열림 + 메모 저장 (Figma: SCR-CASE-03)",High
+TC-10-08,SCR-10,민사사건_기록목록,/case-list,Happy Path,새탭으로 문서 열기,"로그인 완료 + 문서 열람 중","1. 문서 뷰어 상단 '새탭으로 열기' 클릭","새 브라우저 탭에서 해당 문서 열림",Medium
+TC-10-09,SCR-10,민사사건_기록목록,/case-list,Happy Path,컬럼 헤더 필터 사용,"로그인 완료 + 기록 목록 진입","1. 컬럼 헤더 필터 아이콘 클릭
+2. 필터 조건 선택","선택 조건으로 목록 필터링",Medium
+TC-10-10,SCR-10,민사사건_기록목록,/case-list,비정상,빈 기록 목록 (문서 없음),"로그인 완료 + 사건에 문서 미등록","1. /case-list?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&tab=list 접속","빈 상태 UI 표시 (문서 없음 안내)",Medium
+TC-11-01,SCR-10,민사사건_자료요청,/case-list,Happy Path,자료 요청 탭 진입,"로그인 완료","1. /case-list?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG&tab=client_request 접속","자료 요청 목록 표시 (Figma: SCR-CASE-09)",High
+TC-11-02,SCR-10,민사사건_자료요청,/case-list,Happy Path,전체 자료 탭 진입,"로그인 완료","1. /case-list?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&tab=client_list 접속","전체 자료 목록 표시 (Figma: SCR-CASE-08)",High
+TC-11-03,SCR-10,민사사건_자료요청,/case-list,Happy Path,의뢰인 제출 화면 진입,"로그인 완료 + 자료 요청 탭","1. 자료 요청 탭에서 의뢰인 제출 항목 클릭","의뢰인 제출 화면 표시 (Figma: SCR-CASE-10)",High
+TC-11-04,SCR-10,민사사건_자료요청,/case-list,Happy Path,기타 자료 제출,"로그인 완료 + 의뢰인 제출 화면","1. '기타자료 제출하기' 버튼 클릭
+2. 파일 첨부 및 제출","제출 완료 후 목록 반영 (Figma: SCR-CASE-11)",High
+TC-11-05,SCR-10,민사사건_자료요청,/case-list,비정상,civil_case_id 없이 의뢰인 자료 탭 클릭,"로그인 완료 (사건 미선택)","1. /case-list 접속
+2. 사이드바 '의뢰인 자료' 클릭","클릭 무반응 (selectedCaseId null 체크)",Medium
+TC-12-01,SCR-11,서면작성,/case-list,Happy Path,서면 작성 목록 진입,"로그인 완료","1. /case-list?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&tab=editor 접속","서면 작성 목록 화면 렌더링 (Figma: SCR-CASE-12)",High
+TC-12-02,SCR-11,서면작성_에디터,/case-list/editor,Happy Path,서면 에디터 진입,"로그인 완료","1. /case-list/editor?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8 접속","DocumentEditorView 렌더링",High
+TC-12-03,SCR-11,서면작성_에디터,/case-list/editor,Happy Path,서면 내용 입력 후 저장,"로그인 완료 + 에디터 진입","1. 에디터에 내용 입력
+2. 저장 버튼 클릭","저장 성공, 서면 목록에 반영",High
+TC-12-04,SCR-11,서면작성_에디터,/case-list/editor,Happy Path,에디터 뒤로 가기,"로그인 완료 + 에디터 진입","1. 상단 '뒤로 가기' 버튼 클릭",/case-list?...&tab=editor 로 URL 파라미터 유지 이동,Medium
+TC-13-01,SCR-10,민사사건_권한관리,/case-list,Happy Path,권한관리 진입,"로그인 완료","1. 사이드바 권한관리 아이콘 클릭","권한 관리 테이블 표시",Medium
+TC-14-01,SCR-04,증거PDF뷰어,/evidence/pdf/:evidenceId,Happy Path,증거 PDF 뷰어 진입,"로그인 완료 + evidenceId=cdoc_01KK089FYR0HD07J1580F1VXPD","1. /evidence/pdf/cdoc_01KK089FYR0HD07J1580F1VXPD 접속","PDF 문서 렌더링",High
+TC-14-02,SCR-04,증거PDF뷰어,/evidence/pdf/:evidenceId,비정상,존재하지 않는 ID 접근,"","1. /evidence/pdf/invalid_id 접속","에러 UI 또는 404 처리",Medium
+TC-15-01,SCR-05,증거텍스트뷰어,/evidence/text/:evidenceId,Happy Path,OCR 텍스트 뷰어 진입,"로그인 완료","1. /evidence/text/cdoc_01KK089FYR0HD07J1580F1VXPD 접속","OCR 텍스트 렌더링",High
+TC-16-01,SCR-06,증거요약뷰어,/evidence/summary/:evidenceId,Happy Path,요약 뷰어 진입,"로그인 완료","1. /evidence/summary/cdoc_01KK089FYR0HD07J1580F1VXPD 접속","요약 텍스트 렌더링",High
+TC-17-01,SCR-07,증거요약PDF,/evidence/summaryPdf/:evidenceId,Happy Path,요약 PDF 뷰어 진입,"로그인 완료","1. /evidence/summaryPdf/cdoc_01KK089FYR0HD07J1580F1VXPD 접속","요약 PDF 렌더링",Medium
+TC-18-01,SCR-08,클립핑뷰어,/evidence/case-viewer/:evidenceId,Happy Path,클립핑 화면 진입,"로그인 완료","1. /evidence/case-viewer/cdoc_01KK089FYR0HD07J1580F1VXPD 접속","클립핑 인터페이스 렌더링",High
+TC-18-02,SCR-08,클립핑뷰어,/evidence/case-viewer/:evidenceId,Happy Path,클립핑 저장,"로그인 완료 + 클립핑 화면","1. 텍스트 선택
+2. 클립핑 저장","클립핑 목록에 추가",High
+TC-18-03,SCR-08,클립핑뷰어,/evidence/case-viewer/:evidenceId,Happy Path,AI 클립핑 제안,"로그인 완료 + 클립핑 화면","1. AI 클립핑 제안 버튼 클릭","AI 제안 항목 목록 표시",High
+TC-19-01,SCR-02,증거목록,/evidence/list,Happy Path,증거 목록 조회,"로그인 완료","1. /evidence/list 접속","증거 테이블 렌더링",High
+TC-19-02,SCR-02,증거목록,/evidence/list,Happy Path,증거목록 탭 전환 (이력/권한/설정/결제/구독/AI),"로그인 완료","1. 각 탭 순서대로 클릭","각 탭 컨텐츠로 전환",Medium
+TC-20-01,SCR-01,홈_사건목록,/,Happy Path,홈 사건 목록 조회,"로그인 완료","1. https://staging.ailex.co.kr 접속","사건 목록 또는 빈 상태 UI 렌더링",High
+TC-21-01,SCR-09,AI페이지,/ai,Happy Path,AI 서면 생성 진입,"로그인 완료","1. /ai 접속","AI 서면 생성 인터페이스 렌더링",High
+TC-21-02,SCR-09,AI페이지,/ai,Happy Path,챗봇 대화,"로그인 완료","1. /ai 접속
+2. 챗봇에 질문 입력 후 전송","AI 응답 메시지 표시",High
+TC-22-01,SCR-12,설정,/settings,Happy Path,설정 화면 진입,"로그인 완료","1. /settings 접속","설정 화면 렌더링",Medium
+TC-23-01,SCR-13,알림,/notifications,Happy Path,알림 목록 확인,"로그인 완료","1. /notifications 접속","알림 목록 표시",Medium
+TC-24-01,SCR-14,결제관리,/payment,Happy Path,결제 화면 진입,"로그인 완료","1. /payment 접속","결제 정보 표시",Medium
+TC-25-01,SCR-15,구독관리,/subscription,Happy Path,구독 화면 진입,"로그인 완료","1. /subscription 접속","구독 플랜 표시",Medium
+TC-26-01,SCR-16,메모관리,/memo,Happy Path,메모 목록 조회,"로그인 완료","1. /memo 접속","메모 목록 렌더링",Medium
+TC-26-02,SCR-16,메모관리,/memo,Happy Path,메모 작성 및 저장,"로그인 완료","1. /memo 접속
+2. 메모 작성 후 저장","저장 성공 + 목록에 추가",Medium
+TC-27-01,SCR-17,회원가입,/register,Happy Path,회원가입 폼 진입 및 이메일 입력,"","1. /register 접속
+2. 이메일 입력 및 다음 단계 진행",/register/certify 이동,High
+TC-27-02,SCR-17,회원가입,/register,예외,중복 이메일 회원가입 시도,"test2026@softplant.co.kr 기가입","1. /register 접속
+2. test2026@softplant.co.kr 입력","중복 이메일 오류 메시지 표시",High
+TC-28-01,SCR-18,회원가입인증,/register/certify,Happy Path,이메일 인증 코드 입력,"인증 코드 수신","1. 인증 코드 입력
+2. 확인 클릭","다음 단계 이동",High
+TC-29-01,SCR-21,증거제출요청,/evidence-request,Happy Path,외부 증거 요청 폼 진입,"비로그인","1. /evidence-request 접속","증거 제출 요청 폼 렌더링",Medium
+TC-30-01,SCR-22,데모,/demo,Happy Path,데모 화면 진입,"비로그인","1. /demo 접속","데모 메인 화면 렌더링",Medium
+TC-31-01,SCR-24,결제성공,/billing/success,Happy Path,결제 성공 화면,"결제 완료 콜백","1. /billing/success 접속","결제 성공 안내 화면 표시",High
+TC-31-02,SCR-25,결제실패,/billing/fail,Happy Path,결제 실패 화면,"결제 실패 콜백","1. /billing/fail 접속","결제 실패 안내 표시",High
+TC-A-01,SCR-23,어드민홈,/,Happy Path,어드민 로그인 후 홈 진입,"ADMIN role 계정 로그인","1. ADMIN 계정으로 로그인
+2. / 접속","어드민 홈 화면 렌더링",High
+TC-A-02,SCR-23,어드민PDF뷰어,/admin/evidence/pdf/:evidenceId,Happy Path,어드민 증거 PDF 뷰어,"ADMIN 로그인","1. /admin/evidence/pdf/cdoc_01KK089FYR0HD07J1580F1VXPD 접속","어드민 전용 PDF 뷰어 렌더링",High

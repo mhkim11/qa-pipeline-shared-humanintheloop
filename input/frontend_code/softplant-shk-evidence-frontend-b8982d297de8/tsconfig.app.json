@@ -1,0 +1,46 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "@emotion/react",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["./*"],
+      "@components/*": ["./components/*"],
+      "@hooks/*": ["./hooks/*"],
+      "@query/*": ["./hooks/react-query/*"],
+      "@stores/*": ["./hooks/stores/*"],
+      "@pages/*": ["./pages/*"],
+      "@constants/*": ["./shared/constants/*"],
+      "@styled/*": ["./shared/styled/*"],
+      "@atoms/*": ["./atoms/*"],
+      "@apis/*": ["./apis/*"],
+      "@type/*": ["./apis/type/*"],
+      "@assets/*": ["./assets/*"],
+      "@lib/*": ["./lib/*"]
+    },
+    "typeRoots": ["src/types", "node_modules/@types", "./node_modules/@emotion/react/types/css-prop"]
+  },
+  "include": ["src", "**/*.ts", "**/*.tsx", "cypress.config.js"],
+  "exclude": ["node_modules", "cypress.config.js", "cypress"]
+}

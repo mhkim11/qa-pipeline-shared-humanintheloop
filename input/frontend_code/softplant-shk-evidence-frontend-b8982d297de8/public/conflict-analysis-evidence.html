@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>진술 증거 상충 분석</title>
+    <style>
+
+        .container {
+            padding: 30px;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            margin-top: 24px;
+            margin-bottom: 16px;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+        
+        h1 { font-size: 2em; border-bottom: 1px solid #eee; padding-bottom: 0.3em; }
+        h2 { font-size: 1.5em; border-bottom: 1px solid #eee; padding-bottom: 0.3em; }
+        h3 { font-size: 1.25em; }
+        h4 { font-size: 1em; }
+        h5 { font-size: 0.875em; }
+        h6 { font-size: 0.85em; color: #6a737d; }
+        
+        p {
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+        
+        a {
+            color: #0366d6;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        code {
+            padding: 0.2em 0.4em;
+            margin: 0;
+            font-size: 85%;
+            background-color: rgba(27,31,35,0.05);
+            border-radius: 3px;
+            font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+        }
+        
+        pre {
+            padding: 16px;
+            overflow: auto;
+            font-size: 85%;
+            line-height: 1.45;
+            background-color: #f6f8fa;
+            border-radius: 3px;
+        }
+        
+        pre code {
+            display: inline;
+            padding: 0;
+            margin: 0;
+            overflow: visible;
+            line-height: inherit;
+            word-wrap: normal;
+            background-color: transparent;
+            border: 0;
+        }
+        
+        blockquote {
+            padding: 0 1em;
+            color: #6a737d;
+            border-left: 0.25em solid #dfe2e5;
+            margin: 0 0 16px 0;
+        }
+        
+        table {
+            border-collapse: collapse;
+            margin: 16px 0;
+            display: block;
+            width: 100%;
+            overflow: auto;
+        }
+        
+        table th {
+            font-weight: 600;
+            padding: 6px 13px;
+            border: 1px solid #dfe2e5;
+            background-color: #f6f8fa;
+        }
+        
+        table td {
+            padding: 6px 13px;
+            border: 1px solid #dfe2e5;
+        }
+        
+        table tr:nth-child(2n) {
+            background-color: #f6f8fa;
+        }
+        
+        ul, ol {
+            padding-left: 2em;
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+        
+        li + li {
+            margin-top: 0.25em;
+        }
+        
+        hr {
+            height: 0.25em;
+            padding: 0;
+            margin: 24px 0;
+            background-color: #e1e4e8;
+            border: 0;
+        }
+        
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .task-list-item {
+            list-style-type: none;
+        }
+        
+        .task-list-item input {
+            margin: 0 0.2em 0.25em -1.6em;
+            vertical-align: middle;
+        }
+        
+        .footnote-ref {
+            font-weight: bold;
+            text-decoration: none;
+        }
+        
+        .footnotes {
+            font-size: 85%;
+            border-top: 1px solid #dfe2e5;
+            margin-top: 32px;
+            padding-top: 16px;
+        }
+        
+        .note, .warning, .tip {
+            padding: 12px 16px;
+            margin: 16px 0;
+            border-left: 4px solid;
+            border-radius: 4px;
+        }
+        
+        .note {
+            background-color: #f0f8ff;
+            border-color: #0366d6;
+        }
+        
+        .warning {
+            background-color: #fff5f5;
+            border-color: #d73a49;
+        }
+        
+        .tip {
+            background-color: #f0fff4;
+            border-color: #28a745;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="container">
+<h1 id="진술-상충-분석-보고서">진술 상충 분석 보고서</h1>
+<h2 id="1-진술인별-자기모순-분석">1. 진술인별 자기모순 분석</h2>
+<h3>박연지 - 피고인</h3>
+<h4>모순 사항 1: 문동운에 대한 학교폭력 가해 여부</h4>
+<ul>
+<li><strong>초기 진술</strong> (출처: 피고인 박연지 1차 피의자 신문조서, 2025.04.03)
+<blockquote>
+<p>&quot;절대 그런 일은 없었습니다. 저는 학창시절에 모범학생이었고, 다른 학생들에게 폭력을 행사한 적이 없습니다. 이건 완전히 날조된 이야기입니다.&quot;</p>
+</blockquote>
+</li>
+<li><strong>변경된 진술</strong> (출처: 피고인 박연지-전재중 대질 신문조서, 2025.06.05)
+<blockquote>
+<p>&quot;27년 전 일이라... 정확한 기억은... 하지만 문동운에게 상처를 준 것은... 사실일 수도...&quot;</p>
+</blockquote>
+</li>
+<li><strong>분석</strong>: 초기에는 모든 폭력 혐의를 전면 부인했으나, 폴라로이드 사진 등 객관적 증거와 다른 피고인들의 진술이 제시되자 '장난', '사실일 수도 있다'며 진술을 번복함. 이는 초기 진술이 허위였음을 시사하며, 증거에 따라 진술을 바꾸는 전형적인 책임 회피 패턴을 보임.</li>
+</ul>
+<h4>모순 사항 2: 윤소히 사망 사건 관련</h4>
+<ul>
+<li><strong>초기 진술</strong> (출처: 피고인 박연지 1차 피의자 신문조서, 2025.04.03)
+<blockquote>
+<p>&quot;이름은 들어본 것 같은데, 구체적으로 어떤 학생이었는지는 잘 모르겠습니다... 그날 무슨 일이 있었는지도 모르겠고, 윤소히를 만난 적도 없습니다.&quot;</p>
+</blockquote>
+</li>
+<li><strong>변경된 진술</strong> (출처: 피고인 박연지 2차 피의자 신문조서, 2025.04.10)
+<blockquote>
+<p>&quot;네... 이제 기억이 나네요. 만난 것은 맞습니다. 하지만 제가 부른 게 아니라 윤소히가 먼저 만나자고 연락했어요... 윤소히는 스스로 뛰어내린 겁니다. 저는 막으려고 했어요.&quot;</p>
+</blockquote>
+</li>
+<li><strong>분석</strong>: 윤소히와의 관계 및 만남 자체를 부인하던 초기 진술에서, 일기장 등 증거가 제시되자 만남 사실을 인정하며 자살 방조로 진술을 변경함. 핵심 사실관계에 대한 진술이 180도 바뀌어 신빙성이 매우 낮음.</li>
+</ul>
+<h4>모순 사항 3: 윤소히 유품(명찰, 일기장) 소지 경위</h4>
+<ul>
+<li><strong>초기 진술</strong> (출처: 피고인 박연지 1차 피의자 신문조서, 2025.04.03)
+<blockquote>
+<p>&quot;정말 이해가 안 됩니다. 제가 왜 그런 물건을 가지고 있겠습니까? 누군가 저를 모함하기 위해 고의로 넣어둔 것 같습니다. 이건 명백한 조작입니다.&quot;</p>
+</blockquote>
+</li>
+<li><strong>변경된 진술</strong> (출처: 피고인 박연지 2차 피의자 신문조서, 2025.04.10)
+<blockquote>
+<p>&quot;그때 상황이 너무 혼란스러웠습니다. 아마 무의식중에 가져왔나 봐요... 버리기가 무서웠습니다. 그렇다고 누구에게 말할 수도 없었고... 그냥 금고에 넣어두고 잊으려고 했어요.&quot;</p>
+</blockquote>
+</li>
+<li><strong>분석</strong>: 증거물 자체를 부정하던 초기 진술에서, 압수수색 사실이 명확해지자 '무의식', '혼란' 등을 이유로 들며 소지 사실은 인정함. 진술의 일관성이 전혀 없으며, 증거인멸 혐의를 회피하려는 의도가 명백함.</li>
+</ul>
+<h4>모순 사항 4: 담임교사 김종문 금품 제공 여부</h4>
+<ul>
+<li><strong>초기 진술</strong> (출처: 피고인 박연지 1차 피의자 신문조서, 2025.04.03)
+<blockquote>
+<p>&quot;그런 일은 없었습니다. 왜 제가 남의 자퇴에 돈을 주겠습니까? 말도 안 되는 이야기입니다.&quot;</p>
+</blockquote>
+</li>
+<li><strong>변경된 진술</strong> (출처: 피고인 박연지 3차 피의자 신문조서, 2025.04.15)
+<blockquote>
+<p>&quot;돈을 준 건 맞지만, 그것은 학교 발전기금이었습니다. 증거인멸과는 관계없습니다.&quot;</p>
+</blockquote>
+</li>
+<li><strong>분석</strong>: 금품 제공 사실을 전면 부인하다가, 故 김종문 교사의 유서와 진술이 증거로 나오자 '학교 발전기금' 명목이었다고 진술을 변경함. 핵심 행위는 인정하되 그 목적을 왜곡하여 책임을 회피하려는 패턴임.</li>
+</ul>
+<h4>모순 사항 5: 손명호 침입 교사 혐의</h4>
+<ul>
+<li><strong>초기 진술</strong> (출처: 피고인 박연지 1차 피의자 신문조서, 2025.04.03)
+<blockquote>
+<p>&quot;절대 그런 일은 없습니다. 손명호를 최근에 만난 적도 없고, 돈을 준 적도 없습니다. 이건 완전한 거짓말입니다.&quot;</p>
+</blockquote>
+</li>
+<li><strong>변경된 진술</strong> (출처: 피고인 박연지 1차 피의자 신문조서, 2025.04.03)
+<blockquote>
+<p>&quot;그럼... 아마 다른 용도였을 겁니다. 손명호가 돈이 급하다고 해서 빌려준 것일 수도 있습니다.&quot;</p>
+</blockquote>
+</li>
+<li><strong>분석</strong>: 동일한 신문조서 내에서도 계좌이체 내역이 제시되자 '만난 적도, 돈 준 적도 없다'에서 '빌려준 것일 수 있다'로 즉각 진술을 번복함. 이는 신빙성이 극히 낮음을 보여줌.</li>
+</ul>
+<h3>전재중 - 피고인</h3>
+<h4>모순 사항 1: 학교폭력 가해 정도</h4>
+<ul>
+<li><strong>초기 진술</strong> (출처: 피고인 전재중 1차 피의자 신문조서, 2025.04.25)
+<blockquote>
+<p>&quot;그런 일은 전혀 없었습니다. 저는 다른 학생의 돈을 빼앗은 적이 한 번도 없습니다... 그런 끔찍한 일을 할 사람이 아닙니다.&quot;</p>
+</blockquote>
+</li>
+<li><strong>변경된 진술</strong> (출처: 피고인 전재중 2차 피의자 신문조서, 2025.05.10)
+<blockquote>
+<p>&quot;그 사건은 기억이 있습니다. 하지만 그것은 폭행이라기보다는 장난이었고, 돈을 빼앗은 것도 잠깐 빌린 것이었습니다... 갈비뼈가 부러졌다는 것은 몰랐습니다... 정말 그랬다면 죄송합니다.&quot;</p>
+</blockquote>
+</li>
+<li><strong>분석</strong>: 초기에는 모든 폭력 및 금품갈취 혐의를 부인했으나, 의료기록 등 증거가 제시되자 행위 자체는 인정하되 '장난', '빌린 것'으로 축소·왜곡함. 진술의 일관성이 부족하며 책임 회피 의도가 보임.</li>
+</ul>
+<h4>모순 사항 2: 손명호를 통한 피해자 감시 지시 여부</h4>
+<ul>
+<li><strong>초기 진술</strong> (출처: 피고인 전재중 1차 피의자 신문조서, 2025.04.25)
+<blockquote>
+<p>&quot;감시하라고 지시한 것은 아닙니다. 다만 문동운이 어떻게 지내는지 궁금해서 '혹시 문동운 소식 들리는 게 있으면 알려달라'고 한 적은 있습니다.&quot;</p>
+</blockquote>
+</li>
+<li><strong>변경된 진술</strong> (출처: 피고인 전재중 2차 피의자 신문조서, 2025.05.10)
+<blockquote>
+<p>&quot;네, 인정합니다. 제가 손명호에게 문동운 씨를 지켜보라고 했습니다. 하지만 그것은 해를 끼치려는 목적이 아니라, 문동운 씨가 또 다른 문제를 일으킬까 봐 걱정되어서였습니다. 순수한 방어적 목적이었습니다.&quot;</p>
+</blockquote>
+</li>
+<li><strong>분석</strong>: '단순 안부 확인'에서 '지켜보라'는 지시를 인정하는 것으로 진술이 변경됨. 행위의 목적을 '방어적 목적'으로 정당화하려 시도하고 있으나, 감시 지시 자체는 시인함.</li>
+</ul>
+<h3>이사랑 - 피고인</h3>
+<h4>모순 사항 1: 학교폭력 가해 여부</h4>
+<ul>
+<li><strong>초기 진술</strong> (출처: 피고인 이사랑 1차 피의자 신문조서, 2025.05.14)
+<blockquote>
+<p>&quot;그런 심각한 일이 있었다면 분명히 기억했을 텐데 전혀 기억나지 않습니다... 저는 예술가 기질이 있어서 남을 해치는 것보다는 창작 활동에만 관심이 있었거든요.&quot;</p>
+</blockquote>
+</li>
+<li><strong>변경된 진술</strong> (출처: 피고인 이사랑 3차 피의자 신문조서, 2025.05.28)
+<blockquote>
+<p>&quot;네... 인정합니다. 제가 혈액의 색깔에 매료되어 있었어요... 제 목적은 상처를 내는 것이 아니라 예술적 소재를 얻는 것이었어요.&quot;</p>
+</blockquote>
+</li>
+<li><strong>분석</strong>: 초기에는 혐의를 전면 부인하며 기억나지 않는다고 진술했으나, 다른 피고인들의 진술과 증거가 제시되자 행위 자체는 인정함. 다만, 그 동기를 '예술적 행위'로 포장하여 범죄성을 희석시키려 시도함.</li>
+</ul>
+<h4>모순 사항 2: 마약 투약 혐의</h4>
+<ul>
+<li><strong>초기 진술</strong> (출처: 피고인 이사랑 1차 피의자 신문조서, 2025.05.14)
+<blockquote>
+<p>&quot;그런 일은 전혀 없었습니다. 저는 건전한 예술가로서 활동하고 있고, 마약 같은 불법 약물과는 전혀 관계가 없어요... 제 집에서 나왔다는 게 믿기지 않네요.&quot;</p>
+</blockquote>
+</li>
+<li><strong>변경된 진술</strong> (출처: 피고인 이사랑 마약류 투약 자백서, 2025.04.17)
+<blockquote>
+<p>&quot;저 이사랑는 2024년 10월경부터 2025년 4월경까지 약 6개월간... 메트암페타민을 불법으로 투약한 사실을 자백합니다.&quot;</p>
+</blockquote>
+</li>
+<li><strong>분석</strong>: 마약 투약 혐의를 전면 부인했으나, 소변검사 결과 등 과학적 증거가 명확하자 모든 혐의를 인정하고 자백함. 이는 객관적 증거 앞에서는 진술을 번복하는 패턴을 보여줌.</li>
+</ul>
+<h3>최해정 - 피고인</h3>
+<h4>모순 사항 1: 항공기 내 협박 및 불법 정보 조회</h4>
+<ul>
+<li><strong>초기 진술</strong> (출처: 피고인 최해정 1차 피의자 신문조서)
+<blockquote>
+<p>&quot;그것은 단순한 우연의 일치입니다. 저는 일반적인 스케줄에 따라 비행 업무를 수행했을 뿐입니다... 어떠한 협박도 하지 않았습니다.&quot;</p>
+</blockquote>
+</li>
+<li><strong>변경된 진술</strong> (출처: 피고인 최해정 2차 피의자 신문조서, 2025.05.09)
+<blockquote>
+<p>&quot;네, 스케줄 변경을 요청한 것은 사실입니다... 네, 그 말은 제가 잘못했습니다. 그것은 분명 협박으로 들릴 수 있는 말이었고, 저도 그런 의도가 있었음을 인정합니다.&quot;</p>
+</blockquote>
+</li>
+<li><strong>분석</strong>: 초기에는 모든 행위를 '우연'이라며 부인했으나, 스케줄 변경 기록과 녹취록 등 객관적 증거가 제시되자 계획된 행위였음과 협박 의도를 인정함. 진술의 신빙성이 낮음.</li>
+</ul>
+<h4>모순 사항 2: 허위 민원 제기</h4>
+<ul>
+<li><strong>초기 진술</strong> (출처: 피고인 최해정 1차 피의자 신문조서)
+<blockquote>
+<p>&quot;그런 일은 없었습니다. 저는 학부모도 아니고, 교육청에 민원을 제기할 이유도 없습니다.&quot;</p>
+</blockquote>
+</li>
+<li><strong>변경된 진술</strong> (출처: 피고인 최해정 2차 피의자 신문조서, 2025.05.09)
+<blockquote>
+<p>&quot;네, 인정합니다. 직접적인 지인은 없습니다. 하지만 인터넷 학부모 커뮤니티에서 세명초등학교에 대한 이야기를 본 적이 있고, 그것을 바탕으로 민원을 제기했습니다. 제 행동이 잘못됐다는 것은 인정합니다.&quot;</p>
+</blockquote>
+</li>
+<li><strong>분석</strong>: 허위 민원 제기 사실을 전면 부인하다가, IP 추적 결과 등 증거가 제시되자 '지인의 부탁'으로, 이후에는 '인터넷 정보'를 바탕으로 했다고 진술을 계속 변경하며 책임을 축소하려 함.</li>
+</ul>
+<h2 id="2-진술인-간-교차모순-분석">2. 진술인 간 교차모순 분석</h2>
+<h3>쟁점: 학교폭력의 주도자</h3>
+<ul>
+<li><strong>박연지의 진술</strong> (출처: 피고인 박연지-최해정 대질 신문조서)
+<blockquote>
+<p>&quot;저는 주도적으로 괴롭힌 적이 없습니다. 당시에는 학급 분위기가 그랬고, 다른 친구들이 먼저 시작한 일이었습니다... 특히 최해정이 먼저 문동운을 괴롭히자고 제안했습니다.&quot;</p>
+</blockquote>
+</li>
+<li><strong>전재중, 이사랑, 최해정, 손명호의 진술</strong> (출처: 각 피의자 신문조서, 대질 신문조서)
+<blockquote>
+<p>(종합) &quot;박연지가 완전한 보스(리더)였고, 모든 계획을 세우고 지시했다. 우리는 박연지의 지시를 따르거나 분위기에 휩쓸려 가담했다.&quot;</p>
+</blockquote>
+</li>
+<li><strong>평가</strong>: 박연지를 제외한 모든 가해자가 일관되게 박연지를 주도자로 지목하고 있음. 특히 사망한 손명호의 자백 진술과 최해정, 이사랑의 구체적인 진술은 박연지의 주도적 역할을 강력하게 뒷받침함. 박연지의 진술은 신빙성이 낮음.</li>
+</ul>
+<h3>쟁점: 윤소히 사망 사건의 진실</h3>
+<ul>
+<li><strong>박연지의 진술</strong> (출처: 피고인 박연지 2차 피의자 신문조서)
+<blockquote>
+<p>&quot;윤소히는 스스로 뛰어내린 겁니다. 저는 막으려고 했어요... 너무 충격을 받아서 한동안 멍하니 있었습니다.&quot;</p>
+</blockquote>
+</li>
+<li><strong>이사랑의 진술</strong> (출처: 피고인 박연지-이사랑 대질 신문조서)
+<blockquote>
+<p>&quot;박연지가 내려와서 '사고였다'고 했을 때서야 알았어요... (하지만) 박연지가 '윤소히 문제를 해결해야 한다'고 말했거든요.&quot;</p>
+</blockquote>
+</li>
+<li><strong>객관적 증거</strong> (출처: 윤소히 추락 궤적 분석 보고서, 윤소히 일기장)
+<blockquote>
+<p>&quot;피해자가 발견된 위치(건물 외벽으로부터 약 4.5m)는 자발적 투신이나 사고에 의한 추락으로는 설명하기 어려운 거리입니다... 일기장: 11월 14일 3시에 박연지을 만나기로 했다. 사과를 받고 도움을 청해볼 생각이다.&quot;</p>
+</blockquote>
+</li>
+<li><strong>평가</strong>: 박연지의 '자살' 주장은 추락 궤적 분석 등 과학적 증거와 정면으로 배치됨. 또한 도움을 청하러 간다는 피해자의 일기장 내용과도 모순됨. 박연지의 진술은 신빙성이 매우 낮으며, 상해치사 혐의를 뒷받침하는 정황이 유력함.</li>
+</ul>
+<h3>쟁점: 손명호 자택 침입 지시자</h3>
+<ul>
+<li><strong>박연지의 진술</strong> (출처: 피고인 박연지 1차 피의자 신문조서)
+<blockquote>
+<p>&quot;절대 그런 일은 없습니다. 손명호를 최근에 만난 적도 없고, 돈을 준 적도 없습니다.&quot;</p>
+</blockquote>
+</li>
+<li><strong>전재중의 진술</strong> (출처: 피고인 전재중-최해정 대질 신문조서)
+<blockquote>
+<p>&quot;아마도... 박연지씨의 지시를 받았지만 그것을 저의 지시라고 잘못 진술한 것 같습니다. 당시 박연지씨가 더 적극적이었으니까요.&quot;</p>
+</blockquote>
+</li>
+<li><strong>손명호의 진술</strong> (출처: 사망한 손명호의 경찰 진술조서)
+<blockquote>
+<p>&quot;박연지가 저를 따로 불러서 3천만원이 든 가방을 줬어요. '문동운 집에 가서 증거를 찾아 없애라'고 했습니다... 전재중 형님도 이 계획을 알고 있었어요.&quot;</p>
+</blockquote>
+</li>
+<li><strong>평가</strong>: 손명호의 진술은 박연지로부터의 3천만원 계좌이체 내역, 통화 기록 등 객관적 증거와 일치하여 신빙성이 매우 높음. 박연지와 전재중은 서로에게 책임을 전가하고 있으나, 손명호의 구체적인 진술과 객관적 증거를 고려할 때 박연지가 주도하고 전재중이 공모한 것으로 판단됨.</li>
+</ul>
+<h3>쟁점: 보복범죄 공모 여부</h3>
+<ul>
+<li><strong>박연지의 진술</strong> (출처: 피고인 박연지-최해정 대질 신문조서)
+<blockquote>
+<p>&quot;각자 알아서 대응한 거예요. 서로 역할을 나눠서 한 게 아닙니다.&quot;</p>
+</blockquote>
+</li>
+<li><strong>최해정의 진술</strong> (출처: 피고인 박연지-최해정 대질 신문조서)
+<blockquote>
+<p>&quot;박연지가 전체적인 계획을 세우고 각자에게 역할을 배정했어요. 학교는 박연지가, 항공기는 제가, 온라인은 이사랑이 맡았죠.&quot;</p>
+</blockquote>
+</li>
+<li><strong>객관적 증거</strong> (출처: 고소장 접수 직후 피고인들 간 통화 기록)
+<blockquote>
+<p>박연지가 주도하여 4자 통화로 대응 방안을 논의하고, 각자의 사회적 지위를 이용한 압박 방법을 모의하는 내용이 확인됨.</p>
+</blockquote>
+</li>
+<li><strong>평가</strong>: 박연지의 '개별 행동' 주장은 통화 기록 등 객관적 증거와 명백히 모순됨. 최해정을 비롯한 다른 피고인들의 '역할 분담' 진술이 객관적 증거와 부합하여 신빙성이 높음.</li>
+</ul>
+<h2 id="3-종합-평가">3. 종합 평가</h2>
+<ul>
+<li><strong>진술 신빙성이 높은 진술인과 그 근거</strong>:
+<ul>
+<li><strong>문동운 (피해자)</strong>: 진술이 매우 구체적이고 시간의 흐름에도 일관성을 유지함. 본인이 보관해온 증거, 의료 기록, 제3자 증거(가해자 자택 압수 사진 등)와 완벽하게 부합함.</li>
+<li><strong>손명호 (사망한 공범)</strong>: 자신의 범죄를 인정하는 자백 진술이며, 통화 기록, 계좌 이체 내역 등 객관적 증거와 일치하는 부분이 많아 신빙성이 매우 높음.</li>
+<li><strong>강현남 (목격자)</strong>: 중립적인 제3자로서 구체적이고 일관된 진술을 하고 있으며, 다른 증거들과 교차 검증됨.</li>
+</ul>
+</li>
+<li><strong>핵심 쟁점에 대한 최종 사실관계 판단</strong>:
+<ul>
+<li><strong>학교폭력</strong>: 박연지의 주도 하에 전재중, 이사랑, 최해정, 손명호가 가담한 조직적이고 지속적인 가혹행위였음이 명백함.</li>
+<li><strong>윤소히 사망</strong>: 박연지가 윤소히를 밀어 추락사하게 한 상해치사 사건일 가능성이 매우 높으며, 자살이라는 박연지의 주장은 신빙성이 없음.</li>
+<li><strong>보복범죄</strong>: 피해자의 고소 이후, 박연지의 주도 하에 피고인들이 각자의 사회적 지위를 이용하여 역할을 분담한 계획적이고 조직적인 범죄임.</li>
+</ul>
+</li>
+<li><strong>추가 확인이 필요한 사항</strong>:
+<ul>
+<li><strong>손명호 사망 경위</strong>: 손명호가 모든 사실을 자백한 직후 사망한 점, 부검 결과 타살 정황이 있는 점, 사망 직전 전재중과 박연지가 접촉한 점 등을 고려할 때, 이들의 살인 또는 살인교사 혐의에 대한 추가 수사가 필요함.</li>
+</ul>
+</li>
+</ul>
+    </div>
+</body>
+</html>

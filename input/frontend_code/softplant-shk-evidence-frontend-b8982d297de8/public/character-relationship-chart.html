@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>인물 관계도_20250804_093020</title>
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Base styles */
+        body {
+            overflow-x: hidden;
+        }
+        
+        #graph-container {
+            width: 100%;
+            height: 100%;
+            background-color: #fff;
+            position: relative;
+            min-height: 400px;
+        }
+        
+        #loading-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2em;
+            color: #4f46e5;
+            display: none;
+            z-index: 10;
+        }
+        
+        /* Main layout container */
+        .main-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        .content-wrapper {
+            flex: 1;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Graph area */
+        .graph-area {
+            flex: 1;
+            position: relative;
+            transition: margin-right 0.3s ease;
+        }
+        
+        /* Sidebar styles */
+        .sidebar {
+            width: 380px;
+            background: white;
+            border-left: 1px solid #e5e7eb;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            position: relative;
+            z-index: 30;
+        }
+        
+        /* Mobile menu button */
+        .menu-button {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 50;
+            background: #4f46e5;
+            color: white;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            cursor: pointer;
+            display: none;
+        }
+        
+        .menu-button:hover {
+            background: #4338ca;
+        }
+        
+        /* Overlay backdrop */
+        .sidebar-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 25;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .sidebar-backdrop.active {
+            display: block;
+            opacity: 1;
+        }
+        
+        /* Metadata display */
+        #metadata-display {
+            font-size: 12px;
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 10px;
+            word-wrap: break-word;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        /* Responsive styles */
+        @media (max-width: 1024px) {
+            .menu-button {
+                display: block;
+            }
+            
+            .sidebar {
+                position: fixed;
+                right: 0;
+                top: 0;
+                height: 100vh;
+                transform: translateX(100%);
+                z-index: 40;
+                box-shadow: -4px 0 6px rgba(0,0,0,0.1);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .graph-area {
+                margin-right: 0 !important;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .sidebar {
+                width: 85vw;
+                max-width: 320px;
+            }
+            
+            .filter-button {
+                padding: 0.375rem 0.75rem !important;
+                font-size: 0.75rem !important;
+            }
+            
+            #metadata-display {
+                font-size: 11px;
+                max-height: 150px;
+            }
+        }
+        
+        @media (min-width: 1025px) {
+            .sidebar-backdrop {
+                display: none !important;
+            }
+        }
+        
+        /* Filter button styles */
+        .filter-button {
+            transition: all 0.2s ease;
+        }
+        
+        /* Ensure graph fills available space */
+        @media (max-width: 480px) {
+            #graph-container {
+                min-height: 350px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="main-container">
+        <!-- Mobile menu button -->
+        <button id="menu-toggle" class="menu-button">
+            <svg id="hamburger-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+            <svg id="close-icon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+        
+        <!-- Backdrop for mobile -->
+        <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+        
+        <div class="content-wrapper">
+            <!-- Graph area -->
+            <main class="graph-area">
+                <div id="graph-container">
+                    <div id="loading-indicator">그래프 로딩 중...</div>
+                </div>
+            </main>
+            
+            <!-- Sidebar -->
+            <aside id="sidebar" class="sidebar">
+                <div class="p-6">
+                    <!-- Close button for mobile -->
+                    <button id="close-sidebar" class="lg:hidden absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-md">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                    
+                    <div class="controls flex flex-col h-full">
+                        <div class="flex-grow">
+                            <!-- Search -->
+                            <div class="mb-6">
+                                <label for="search-input" class="block text-sm font-semibold text-gray-700 mb-2">노드 검색</label>
+                                <input type="text" id="search-input" placeholder="노드 이름 입력..." 
+                                    class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                            
+                            <!-- Node filters -->
+                            <div class="mb-6">
+                                <h3 class="text-sm font-semibold text-gray-700 mb-2">노드 유형 필터</h3>
+                                <div id="node-type-filter-options" class="flex flex-wrap gap-2">
+                                    <!-- Node filters will be populated by JavaScript -->
+                                </div>
+                            </div>
+                            
+                            <!-- Edge filters -->
+                            <div class="mb-4">
+                                <h3 class="text-sm font-semibold text-gray-700 mb-2">관계 유형 필터</h3>
+                                <div id="edge-type-filter-options" class="flex flex-wrap gap-2">
+                                    <!-- Edge filters will be populated by JavaScript -->
+                                </div>
+                            </div>
+                            
+                            <!-- Metadata display -->
+                            <div class="mt-6">
+                                <h3 class="text-sm font-semibold text-gray-700 mb-2">세부 정보</h3>
+                                <div id="metadata-display">
+                                    <p class="text-gray-500">정보를 보려면 노드를 클릭하세요.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Reset button -->
+                        <div class="mt-auto pt-6">
+                            <button id="reset-button" 
+                                class="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-2 px-4 rounded-md transition-colors duration-200">
+                                필터 초기화
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    <script type="text/javascript">
+        // Sidebar toggle functionality
+        const sidebar = document.getElementById('sidebar');
+        const backdrop = document.getElementById('sidebar-backdrop');
+        const menuToggle = document.getElementById('menu-toggle');
+        const closeSidebar = document.getElementById('close-sidebar');
+        const hamburgerIcon = document.getElementById('hamburger-icon');
+        const closeIcon = document.getElementById('close-icon');
+        
+        function openSidebar() {
+            sidebar.classList.add('active');
+            backdrop.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            // Toggle icons
+            hamburgerIcon.classList.add('hidden');
+            closeIcon.classList.remove('hidden');
+        }
+        
+        function closeSidebarFunc() {
+            sidebar.classList.remove('active');
+            backdrop.classList.remove('active');
+            document.body.style.overflow = '';
+            // Toggle icons
+            hamburgerIcon.classList.remove('hidden');
+            closeIcon.classList.add('hidden');
+        }
+        
+        menuToggle.addEventListener('click', () => {
+            if (sidebar.classList.contains('active')) {
+                closeSidebarFunc();
+            } else {
+                openSidebar();
+            }
+        });
+        
+        closeSidebar.addEventListener('click', closeSidebarFunc);
+        backdrop.addEventListener('click', closeSidebarFunc);
+        
+        // Close sidebar on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && sidebar.classList.contains('active')) {
+                closeSidebarFunc();
+            }
+        });
+        const groupColors = {
+    1: '#ff6961', // 피의자
+    2: '#77dd77', // 피해자
+    3: '#fdfd96', // 참고인/관계자
+    4: '#84b6f4', // 기관/법인
+    5: '#fdcae1'  // 사망자
+};
+const groupShapes = {
+    1: 'circle',
+    2: 'circle',
+    3: 'circle',
+    4: 'box',
+    5: 'circle'
+};
+const nodesData = [
+    // 피의자 (Group 1)
+    { id: 1, label: '박연지', group: 1, typeName: '피의자', metadata: '<b>피고인 (주범)</b><br>직업: 前 기상캐스터<br>혐의: 상해, 상해치사, 증거인멸, 보복범죄', value: 40 },
+    { id: 2, label: '전재중', group: 1, typeName: '피의자', metadata: '<b>피고인 (공범)</b><br>직업: 정조골프장 대표이사<br>혐의: 상해, 보복범죄', value: 35 },
+    { id: 3, label: '이사랑', group: 1, typeName: '피의자', metadata: '<b>피고인 (공범)</b><br>직업: 화가<br>혐의: 상해, 보복범죄, 마약류관리법위반', value: 35 },
+    { id: 4, label: '최해정', group: 1, typeName: '피의자', metadata: '<b>피고인 (공범)</b><br>직업: 미피항공 승무원<br>혐의: 상해, 보복범죄', value: 35 },
+
+    // 피해자 (Group 2)
+    { id: 10, label: '문동운', group: 2, typeName: '피해자', metadata: '<b>고소인/피해자</b><br>직업: 세명초등학교 교사<br>피해: 학교폭력, 보복범죄', value: 40 },
+
+    // 사망자 (Group 5)
+    { id: 5, label: '손명호', group: 5, typeName: '사망자', metadata: '<b>관련자 (사망)</b><br>직업: 전재중 운전기사<br>역할: 학교폭력 및 보복범죄 가담', value: 30 },
+    { id: 11, label: '윤소히', group: 5, typeName: '사망자', metadata: '<b>피해자 (사망)</b><br>신분: 중원고등학교 학생<br>피해: 상해치사', value: 30 },
+    { id: 21, label: '김종문', group: 5, typeName: '사망자', metadata: '<b>참고인 (사망)</b><br>직업: 前 중원고등학교 담임교사<br>역할: 학교폭력 은폐, 증거인멸', value: 25 },
+
+    // 참고인/관계자 (Group 3)
+    { id: 20, label: '하도열', group: 3, typeName: '참고인/관계자', metadata: '<b>참고인</b><br>직업: 재평건설 대표이사<br>관계: 박연지 남편', value: 25 },
+    { id: 22, label: '정미희', group: 3, typeName: '참고인/관계자', metadata: '<b>참고인</b><br>관계: 문동운 모친<br>역할: 박연지의 회유 대상', value: 25 },
+    { id: 23, label: '강현남', group: 3, typeName: '참고인/관계자', metadata: '<b>목격자</b><br>직업: 세명초등학교 교사<br>역할: 학교폭력 목격', value: 25 },
+    { id: 24, label: '윤소히 유족', group: 3, typeName: '참고인/관계자', metadata: '<b>참고인</b><br>관계: 윤소히 부모<br>역할: 27년간 시신 보관, 진실 규명 요구', value: 25 },
+    { id: 25, label: '최호진', group: 3, typeName: '참고인/관계자', metadata: '<b>관련자</b><br>역할: 이사랑에게 마약 판매', value: 20 },
+    { id: 26, label: '하예슬', group: 3, typeName: '참고인/관계자', metadata: '<b>관련자</b><br>관계: 박연지 딸, 문동운의 제자', value: 20 },
+    { id: 27, label: '동급생들', group: 3, typeName: '참고인/관계자', metadata: '<b>목격자 그룹</b><br>역할: 학교폭력 목격 및 방관', value: 20 },
+    { id: 28, label: '학교 교직원', group: 3, typeName: '참고인/관계자', metadata: '<b>참고인 그룹</b><br>구성: 체육/미술/보건/과학 교사, 경비원 등<br>역할: 학교폭력 인지 및 방조', value: 20 },
+    { id: 29, label: '교육청 관계자', group: 3, typeName: '참고인/관계자', metadata: '<b>참고인</b><br>역할: 박연지의 청탁 대상', value: 20 },
+    { id: 30, label: '최정의, 박진실', group: 3, typeName: '참고인/관계자', metadata: '<b>고소대리인</b><br>소속: 변호사<br>역할: 문동운 법률 대리', value: 20 },
+
+    // 기관/법인 (Group 4)
+    { id: 50, label: '중원고등학교', group: 4, typeName: '기관/법인', metadata: '<b>사건 발생 장소 (1997-1998)</b><br>역할: 학교폭력 발생 및 은폐', value: 30 },
+    { id: 51, label: '세명초등학교', group: 4, typeName: '기관/법인', metadata: '<b>사건 발생 장소 (2024-2025)</b><br>역할: 문동운 근무지, 보복범죄 발생지', value: 30 },
+    { id: 52, label: '서울우리지방검찰청', group: 4, typeName: '기관/법인', metadata: '<b>수사기관</b><br>역할: 피고인들 기소', value: 25 },
+    { id: 53, label: '서울시교육청', group: 4, typeName: '기관/법인', metadata: '<b>관련 기관</b><br>역할: 박연지/최해정의 청탁 및 허위민원 대상', value: 25 },
+    { id: 54, label: '재평건설', group: 4, typeName: '기관/법인', metadata: '<b>관련 법인</b><br>대표: 하도열<br>역할: 박연지의 사회적 지위 기반', value: 25 },
+    { id: 55, label: '정조골프장', group: 4, typeName: '기관/법인', metadata: '<b>관련 법인</b><br>대표: 전재중<br>역할: 손명호 고용, 범죄 모의 장소', value: 25 },
+    { id: 56, label: '미피항공', group: 4, typeName: '기관/법인', metadata: '<b>관련 법인</b><br>소속: 최해정<br>역할: 보복범죄에 내부 시스템 악용', value: 25 }
+];
+const edgesData = [
+    // 범죄 행위
+    { from: 1, to: 10, type: '범죄 행위', label: '상해/보복범죄', arrows: 'to', color: { color: '#dc3545' } },
+    { from: 2, to: 10, type: '범죄 행위', label: '상해/보복범죄', arrows: 'to', color: { color: '#dc3545' } },
+    { from: 3, to: 10, type: '범죄 행위', label: '상해/보복범죄', arrows: 'to', color: { color: '#dc3545' } },
+    { from: 4, to: 10, type: '범죄 행위', label: '상해/보복범죄', arrows: 'to', color: { color: '#dc3545' } },
+    { from: 5, to: 10, type: '범죄 행위', label: '상해/보복범죄', arrows: 'to', color: { color: '#dc3545' }, dashes: true },
+    { from: 1, to: 11, type: '범죄 행위', label: '상해치사', arrows: 'to', color: { color: '#dc3545' } },
+    { from: 1, to: 11, type: '범죄 행위', label: '증거인멸', arrows: 'to', color: { color: '#dc3545' } },
+    { from: 3, to: 3, type: '범죄 행위', label: '마약 투약', arrows: 'to', color: { color: '#dc3545' } },
+    { from: 25, to: 3, type: '범죄 행위', label: '마약 판매', arrows: 'to', color: { color: '#dc3545' } },
+
+    // 법적 관계
+    { from: 10, to: 1, type: '법적 관계', label: '고소', arrows: 'to', color: { color: '#6f42c1' } },
+    { from: 10, to: 2, type: '법적 관계', label: '고소', arrows: 'to', color: { color: '#6f42c1' } },
+    { from: 10, to: 3, type: '법적 관계', label: '고소', arrows: 'to', color: { color: '#6f42c1' } },
+    { from: 10, to: 4, type: '법적 관계', label: '고소', arrows: 'to', color: { color: '#6f42c1' } },
+    { from: 30, to: 10, type: '법적 관계', label: '법률 대리', arrows: 'to', color: { color: '#6f42c1' } },
+    { from: 52, to: 1, type: '법적 관계', label: '기소', arrows: 'to', color: { color: '#6f42c1' } },
+    { from: 52, to: 2, type: '법적 관계', label: '기소', arrows: 'to', color: { color: '#6f42c1' } },
+    { from: 52, to: 3, type: '법적 관계', label: '기소', arrows: 'to', color: { color: '#6f42c1' } },
+    { from: 52, to: 4, type: '법적 관계', label: '기소', arrows: 'to', color: { color: '#6f42c1' } },
+
+    // 사회적/가족 관계
+    { from: 1, to: 20, type: '가족 관계', label: '부부', arrows: 'to, from', color: { color: '#fd7e14' } },
+    { from: 1, to: 26, type: '가족 관계', label: '모녀', arrows: 'to', color: { color: '#fd7e14' } },
+    { from: 20, to: 26, type: '가족 관계', label: '부녀', arrows: 'to', color: { color: '#fd7e14' } },
+    { from: 10, to: 22, type: '가족 관계', label: '모녀', arrows: 'to, from', color: { color: '#fd7e14' } },
+    { from: 11, to: 24, type: '가족 관계', label: '자녀', arrows: 'from', color: { color: '#fd7e14' } },
+    { from: 1, to: 2, type: '사회적 관계', label: '공모/동창', arrows: 'to, from', color: { color: '#17a2b8' } },
+    { from: 1, to: 3, type: '사회적 관계', label: '공모/동창', arrows: 'to, from', color: { color: '#17a2b8' } },
+    { from: 1, to: 4, type: '사회적 관계', label: '공모/동창', arrows: 'to, from', color: { color: '#17a2b8' } },
+    { from: 1, to: 5, type: '사회적 관계', label: '공모/동창', arrows: 'to, from', color: { color: '#17a2b8' } },
+    { from: 2, to: 3, type: '사회적 관계', label: '공모/동창', arrows: 'to, from', color: { color: '#17a2b8' } },
+    { from: 2, to: 4, type: '사회적 관계', label: '공모/동창', arrows: 'to, from', color: { color: '#17a2b8' } },
+    { from: 2, to: 5, type: '사회적 관계', label: '공모/동창', arrows: 'to, from', color: { color: '#17a2b8' } },
+    { from: 3, to: 4, type: '사회적 관계', label: '공모/동창', arrows: 'to, from', color: { color: '#17a2b8' } },
+    { from: 3, to: 5, type: '사회적 관계', label: '공모/동창', arrows: 'to, from', color: { color: '#17a2b8' } },
+    { from: 4, to: 5, type: '사회적 관계', label: '공모/동창', arrows: 'to, from', color: { color: '#17a2b8' } },
+
+    // 소속/고용 관계
+    { from: 10, to: 51, type: '소속/고용', label: '근무', arrows: 'to', color: { color: '#28a745' } },
+    { from: 23, to: 51, type: '소속/고용', label: '근무', arrows: 'to', color: { color: '#28a745' } },
+    { from: 26, to: 51, type: '소속/고용', label: '재학', arrows: 'to', color: { color: '#28a745' } },
+    { from: 20, to: 54, type: '소속/고용', label: '대표이사', arrows: 'to', color: { color: '#28a745' } },
+    { from: 2, to: 55, type: '소속/고용', label: '대표이사', arrows: 'to', color: { color: '#28a745' } },
+    { from: 5, to: 2, type: '소속/고용', label: '고용', arrows: 'to', color: { color: '#28a745' } },
+    { from: 4, to: 56, type: '소속/고용', label: '근무', arrows: 'to', color: { color: '#28a745' } },
+    { from: 1, to: 50, type: '소속/고용', label: '재학(과거)', arrows: 'to', color: { color: '#28a745' }, dashes: true },
+    { from: 2, to: 50, type: '소속/고용', label: '재학(과거)', arrows: 'to', color: { color: '#28a745' }, dashes: true },
+    { from: 3, to: 50, type: '소속/고용', label: '재학(과거)', arrows: 'to', color: { color: '#28a745' }, dashes: true },
+    { from: 4, to: 50, type: '소속/고용', label: '재학(과거)', arrows: 'to', color: { color: '#28a745' }, dashes: true },
+    { from: 5, to: 50, type: '소속/고용', label: '재학(과거)', arrows: 'to', color: { color: '#28a745' }, dashes: true },
+    { from: 10, to: 50, type: '소속/고용', label: '재학(과거)', arrows: 'to', color: { color: '#28a745' }, dashes: true },
+    { from: 11, to: 50, type: '소속/고용', label: '재학(과거)', arrows: 'to', color: { color: '#28a745' }, dashes: true },
+    { from: 21, to: 50, type: '소속/고용', label: '근무(과거)', arrows: 'to', color: { color: '#28a745' }, dashes: true },
+    { from: 23, to: 50, type: '소속/고용', label: '재학(과거)', arrows: 'to', color: { color: '#28a745' }, dashes: true },
+    { from: 27, to: 50, type: '소속/고용', label: '재학(과거)', arrows: 'to', color: { color: '#28a745' }, dashes: true },
+    { from: 28, to: 50, type: '소속/고용', label: '근무(과거)', arrows: 'to', color: { color: '#28a745' }, dashes: true },
+
+    // 기타 관계
+    { from: 1, to: 21, type: '기타 관계', label: '금품 제공/은폐 교사', arrows: 'to', color: { color: '#ffc107' } },
+    { from: 2, to: 5, type: '기타 관계', label: '감시 지시', arrows: 'to', color: { color: '#ffc107' } },
+    { from: 1, to: 5, type: '기타 관계', label: '침입 지시', arrows: 'to', color: { color: '#ffc107' } },
+    { from: 1, to: 29, type: '기타 관계', label: '청탁', arrows: 'to', color: { color: '#ffc107' } },
+    { from: 4, to: 53, type: '기타 관계', label: '허위 민원', arrows: 'to', color: { color: '#ffc107' } },
+    { from: 23, to: 1, type: '기타 관계', label: '목격', arrows: 'to', color: { color: '#ffc107' }, dashes: true },
+    { from: 27, to: 1, type: '기타 관계', label: '목격', arrows: 'to', color: { color: '#ffc107' }, dashes: true },
+    { from: 28, to: 1, type: '기타 관계', label: '인지/방조', arrows: 'to', color: { color: '#ffc107' }, dashes: true },
+    { from: 1, to: 22, type: '기타 관계', label: '회유 시도', arrows: 'to', color: { color: '#ffc107' } }
+];
+const nodeFilterTypes = [
+    { value: 'all', label: '모든 노드' },
+    { value: '피의자', label: '피의자' },
+    { value: '피해자', label: '피해자' },
+    { value: '사망자', label: '사망자' },
+    { value: '참고인/관계자', label: '참고인/관계자' },
+    { value: '기관/법인', label: '기관/법인' }
+];
+const edgeFilterTypes = [
+    { value: 'all', label: '모든 관계' },
+    { value: '범죄 행위', label: '범죄 행위' },
+    { value: '법적 관계', label: '법적 관계' },
+    { value: '가족 관계', label: '가족 관계' },
+    { value: '사회적 관계', label: '사회적 관계' },
+    { value: '소속/고용', label: '소속/고용' },
+    { value: '기타 관계', label: '기타 관계' }
+];
+        const loadingIndicator = document.getElementById('loading-indicator');
+        loadingIndicator.style.display = 'block';
+        const defaultNodeShape = 'dot';
+        const defaultNodeSize = 20;
+        const physicsSettings = {
+            enabled: true,
+            barnesHut: {
+                gravitationalConstant: -10000,
+                centralGravity: 0.5,
+                springLength: 120,
+                springConstant: 0.04,
+                damping: 0.09,
+                avoidOverlap: 0.1
+            },
+            solver: 'barnesHut',
+            stabilization: {
+                iterations: 1000,
+            }
+        };
+        const NODE_DIM_OPACITY = 0.15;
+        const EDGE_DIM_OPACITY = 0.1;
+        const EDGE_HIGHLIGHT_WIDTH_BOOST = 1.4;
+
+        function deepClone(obj) {
+            return obj ? JSON.parse(JSON.stringify(obj)) : null;
+        }
+
+        function cloneColorValue(colorValue) {
+            if (colorValue === undefined || colorValue === null) return null;
+            if (typeof colorValue === 'string') return colorValue;
+            return deepClone(colorValue);
+        }
+
+        function hexToRgb(hex) {
+            if (!hex) return { r: 153, g: 153, b: 153 };
+            let sanitized = hex.replace('#', '');
+            if (sanitized.length === 3) {
+                sanitized = sanitized.split('').map(ch => ch + ch).join('');
+            }
+            const intVal = parseInt(sanitized, 16);
+            return {
+                r: (intVal >> 16) & 255,
+                g: (intVal >> 8) & 255,
+                b: intVal & 255,
+            };
+        }
+
+        function colorStringToRgba(colorStr, alpha) {
+            const clampedAlpha = Math.max(0, Math.min(alpha, 1));
+            if (!colorStr) return 'rgba(153, 153, 153, ' + clampedAlpha + ')';
+            if (clampedAlpha >= 0.99) return colorStr;
+            if (colorStr.startsWith('rgba')) {
+                const parts = colorStr.replace(/rgba\(|\)/g, '').split(',').map(p => p.trim());
+                return 'rgba(' + parts[0] + ', ' + parts[1] + ', ' + parts[2] + ', ' + clampedAlpha + ')';
+            }
+            if (colorStr.startsWith('rgb')) {
+                const parts = colorStr.replace(/rgb\(|\)/g, '').split(',').map(p => p.trim());
+                return 'rgba(' + parts[0] + ', ' + parts[1] + ', ' + parts[2] + ', ' + clampedAlpha + ')';
+            }
+            if (colorStr.startsWith('#')) {
+                const { r, g, b } = hexToRgb(colorStr);
+                return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + clampedAlpha + ')';
+            }
+            return colorStr;
+        }
+
+        function applyOpacityToColor(colorValue, alpha) {
+            const clampedAlpha = Math.max(0, Math.min(alpha, 1));
+            if (colorValue === undefined || colorValue === null) {
+                return colorStringToRgba('#9ca3af', clampedAlpha);
+            }
+            if (clampedAlpha >= 0.99) {
+                return cloneColorValue(colorValue);
+            }
+            if (typeof colorValue === 'string') {
+                return colorStringToRgba(colorValue, clampedAlpha);
+            }
+            const clone = cloneColorValue(colorValue);
+            ['color', 'background', 'border'].forEach((key) => {
+                if (clone && clone[key]) {
+                    clone[key] = colorStringToRgba(clone[key], clampedAlpha);
+                }
+            });
+            ['highlight', 'hover'].forEach((key) => {
+                if (!clone || !clone[key]) return;
+                if (typeof clone[key] === 'string') {
+                    clone[key] = colorStringToRgba(clone[key], clampedAlpha);
+                } else {
+                    ['color', 'background', 'border'].forEach(subKey => {
+                        if (clone[key][subKey]) {
+                            clone[key][subKey] = colorStringToRgba(clone[key][subKey], clampedAlpha);
+                        }
+                    });
+                }
+            });
+            return clone;
+        }
+
+        function buildFontObject(baseFont, size, fallbackFont) {
+            const source = baseFont ? deepClone(baseFont) : deepClone(fallbackFont || {});
+            if (!source) return { size };
+            source.size = size;
+            return source;
+        }
+        const processedNodes = nodesData.map(node => ({
+            ...node,
+            color: groupColors[node.group] || '#999999',
+            shape: groupShapes[node.group] || defaultNodeShape,
+            font: { color: '#000000' }
+        }));
+        const nodes = new vis.DataSet(processedNodes);
+        const edges = new vis.DataSet(edgesData);
+        const container = document.getElementById('graph-container');
+        const originalData = { nodes: nodes, edges: edges };
+        const options = {
+            nodes: {
+                borderWidth: 2,
+                size: defaultNodeSize,
+                font: { size: 12, face: 'Inter', color: '#333333' },
+            },
+            edges: {
+                width: 2,
+                smooth: { type: 'cubicBezier', forceDirection: 'horizontal', roundness: 0.4 },
+                font: { size: 10, align: 'middle', color: '#555', strokeWidth: 3, strokeColor: '#ffffff' }
+            },
+            physics: physicsSettings,
+            interaction: {
+                hover: true,
+                navigationButtons: false,
+                keyboard: true
+            },
+            layout: {
+                randomSeed: 12345,
+                improvedLayout:true
+            }
+        };
+        const defaultNodeFont = deepClone(options.nodes && options.nodes.font ? options.nodes.font : { size: 12, color: '#333333' });
+        const defaultEdgeFont = deepClone(options.edges && options.edges.font ? options.edges.font : { size: 10, color: '#555555' });
+        const defaultEdgeWidth = typeof options.edges.width === 'number' ? options.edges.width : 2;
+        const nodeBaseStyles = new Map();
+        const edgeBaseStyles = new Map();
+
+        nodes.get().forEach(node => {
+            nodeBaseStyles.set(node.id, {
+                color: cloneColorValue(node.color || (groupColors[node.group] || '#999999')),
+                font: node.font ? deepClone(node.font) : null,
+                fontSize: node.font && typeof node.font.size === 'number' ? node.font.size : (defaultNodeFont.size || 12)
+            });
+        });
+
+        edges.get().forEach(edge => {
+            edgeBaseStyles.set(edge.id, {
+                color: cloneColorValue(edge.color || null),
+                font: edge.font ? deepClone(edge.font) : null,
+                fontSize: edge.font && typeof edge.font.size === 'number' ? edge.font.size : (defaultEdgeFont.size || 10),
+                width: typeof edge.width === 'number' ? edge.width : defaultEdgeWidth
+            });
+        });
+
+        let currentFocusedNodeId = null;
+        let network = new vis.Network(container, originalData, options);
+
+        function updateNodesForFocus(relatedNodeIds) {
+            const updates = [];
+            nodeBaseStyles.forEach((style, id) => {
+                const isRelated = relatedNodeIds.has(id);
+                const targetFont = isRelated ? style.fontSize + 4 : Math.max(10, style.fontSize - 2);
+                const update = {
+                    id,
+                    font: buildFontObject(style.font, targetFont, defaultNodeFont)
+                };
+                const adjustedColor = applyOpacityToColor(style.color, isRelated ? 1 : NODE_DIM_OPACITY);
+                if (adjustedColor) {
+                    update.color = adjustedColor;
+                }
+                updates.push(update);
+            });
+            nodes.update(updates);
+        }
+
+        function updateEdgesForFocus(relatedEdgeIds) {
+            const updates = [];
+            edgeBaseStyles.forEach((style, id) => {
+                const isRelated = relatedEdgeIds.has(id);
+                const targetFont = isRelated ? style.fontSize + 2 : Math.max(8, style.fontSize - 1);
+                const update = {
+                    id,
+                    width: isRelated ? Math.max(style.width * EDGE_HIGHLIGHT_WIDTH_BOOST, style.width + 1) : Math.max(1, style.width * 0.6),
+                    font: buildFontObject(style.font, targetFont, defaultEdgeFont)
+                };
+                const adjustedColor = applyOpacityToColor(style.color, isRelated ? 1 : EDGE_DIM_OPACITY);
+                if (adjustedColor) {
+                    update.color = adjustedColor;
+                }
+                updates.push(update);
+            });
+            edges.update(updates);
+        }
+
+        function applyVisualFocus(nodeId) {
+            if (!nodeId || currentFocusedNodeId === nodeId) return;
+            currentFocusedNodeId = nodeId;
+            const relatedNodeIds = new Set(network.getConnectedNodes(nodeId));
+            relatedNodeIds.add(nodeId);
+            const relatedEdgeIds = new Set(network.getConnectedEdges(nodeId));
+            updateNodesForFocus(relatedNodeIds);
+            updateEdgesForFocus(relatedEdgeIds);
+        }
+
+        function resetVisualFocus(force = false) {
+            if (!force && currentFocusedNodeId === null) return;
+            currentFocusedNodeId = null;
+            const nodeUpdates = [];
+            nodeBaseStyles.forEach((style, id) => {
+                const update = {
+                    id,
+                    font: buildFontObject(style.font, style.fontSize, defaultNodeFont)
+                };
+                if (style.color) {
+                    update.color = cloneColorValue(style.color);
+                }
+                nodeUpdates.push(update);
+            });
+            const edgeUpdates = [];
+            edgeBaseStyles.forEach((style, id) => {
+                const update = {
+                    id,
+                    width: style.width,
+                    font: buildFontObject(style.font, style.fontSize, defaultEdgeFont)
+                };
+                if (style.color) {
+                    update.color = cloneColorValue(style.color);
+                }
+                edgeUpdates.push(update);
+            });
+            nodes.update(nodeUpdates);
+            edges.update(edgeUpdates);
+        }
+
+        // Store initial positions after stabilization
+        let initialPositions = {};
+        network.once("stabilizationIterationsDone", () => {
+            loadingIndicator.style.display = 'none';
+            network.setOptions( { physics: false } );
+            
+            // Store initial positions after stabilization
+            console.log("init position - captured once")
+            initialPositions = network.getPositions();
+        });
+        
+        // --- Metadata Display Logic ---
+        const metadataDisplay = document.getElementById('metadata-display');
+        network.on('click', function(params) {
+            if (params.nodes.length > 0) {
+                const nodeId = params.nodes[0];
+                const nodeData = originalData.nodes.get(nodeId);
+                if (nodeData && nodeData.metadata) {
+                    metadataDisplay.innerHTML = nodeData.metadata;
+                } else {
+                    metadataDisplay.innerHTML = '<p class="text-gray-500">선택된 노드에 제목 정보가 없습니다.</p>';
+                }
+                applyVisualFocus(nodeId);
+            } else {
+                // Clear metadata if a node is not clicked
+                metadataDisplay.innerHTML = '<p class="text-gray-500">정보를 보려면 노드를 클릭하세요.</p>';
+                resetVisualFocus();
+            }
+        });
+        // --- Filter Logic ---
+        const searchInput = document.getElementById('search-input');
+        const nodeTypeFilterContainer = document.getElementById('node-type-filter-options');
+        const edgeTypeFilterContainer = document.getElementById('edge-type-filter-options');
+        const resetButton = document.getElementById('reset-button');
+        function populateFilters(container, filters, name) {
+            container.innerHTML = '';
+            filters.forEach(filter => {
+                const label = document.createElement('label');
+                const input = document.createElement('input');
+                input.type = 'checkbox';
+                input.value = filter.value;
+                input.name = name;
+                input.className = 'hidden peer';
+                if (filter.value === 'all') {
+                    input.checked = true;
+                }
+                const span = document.createElement('span');
+                span.className = 'inline-block px-3 py-1.5 border border-gray-300 rounded-md cursor-pointer text-sm text-gray-600 transition-colors duration-200 peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600';
+                span.textContent = filter.label;
+                label.appendChild(input);
+                label.appendChild(span);
+                container.appendChild(label);
+            });
+        }
+        populateFilters(nodeTypeFilterContainer, nodeFilterTypes, 'nodeType');
+        populateFilters(edgeTypeFilterContainer, edgeFilterTypes, 'edgeType');
+        searchInput.addEventListener('keyup', e => {
+            const searchText = e.target.value.toLowerCase();
+            if (searchText.length > 0) {
+                const matchedNodes = originalData.nodes.get({ filter: node => node.label.toLowerCase().includes(searchText) });
+                if (matchedNodes.length > 0) {
+                    network.focus(matchedNodes[0].id, { scale: 1.5, animation: true });
+                    network.selectNodes([matchedNodes[0].id]);
+                    applyVisualFocus(matchedNodes[0].id);
+                } else { 
+                    network.unselectAll();
+                    resetVisualFocus(true);
+                }
+            } else {
+                network.fit({ animation: true });
+                network.unselectAll();
+                resetVisualFocus(true);
+            }
+        });
+        function getSelectedCheckboxValues(container) {
+            const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+            const selectedValues = [];
+            let allChecked = false;
+            checkboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    if (checkbox.value === 'all') allChecked = true;
+                    else selectedValues.push(checkbox.value);
+                }
+            });
+            if (allChecked || (selectedValues.length === 0 && container.querySelector('input[value="all"]').checked)) {
+                const allOptions = [];
+                container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                    if (cb.value !== 'all') allOptions.push(cb.value);
+                });
+                return allOptions;
+            }
+            return selectedValues;
+        }
+        function manageCheckboxGroup(container) {
+            const allCheckbox = container.querySelector('input[value="all"]');
+            const individualCheckboxes = Array.from(container.querySelectorAll('input[type="checkbox"]:not([value="all"])'));
+            allCheckbox.addEventListener('change', () => {
+                if (allCheckbox.checked) {
+                    individualCheckboxes.forEach(cb => cb.checked = false);
+                }
+                applyFilters();
+            });
+            individualCheckboxes.forEach(cb => {
+                cb.addEventListener('change', () => {
+                    if (cb.checked) {
+                        allCheckbox.checked = false;
+                    } else if (individualCheckboxes.every(iCb => !iCb.checked)) {
+                        allCheckbox.checked = true;
+                    }
+                    applyFilters();
+                });
+            });
+        }
+        manageCheckboxGroup(nodeTypeFilterContainer);
+        manageCheckboxGroup(edgeTypeFilterContainer);
+        
+        function isResetOrSelectAllScenario() {
+            const allNodeCheckbox = nodeTypeFilterContainer.querySelector('input[value="all"]');
+            const allEdgeCheckbox = edgeTypeFilterContainer.querySelector('input[value="all"]');
+            console.log(allNodeCheckbox.checked, allEdgeCheckbox.checked)
+            return allNodeCheckbox.checked && allEdgeCheckbox.checked;
+        }
+        
+        function applyFilters() {
+            const selectedNodeTypes = getSelectedCheckboxValues(nodeTypeFilterContainer);
+            const selectedEdgeTypes = getSelectedCheckboxValues(edgeTypeFilterContainer);
+
+            // Check if all nodes or all edges are selected
+            const allNodesSelected = selectedNodeTypes.length === nodeFilterTypes.length - 1;
+            const allEdgesSelected = selectedEdgeTypes.length === edgeFilterTypes.length - 1;
+
+            let nodesView, edgesView;
+
+            if (allNodesSelected && !allEdgesSelected) {
+                console.log("edge filtering")
+                // Edge filtering only: show selected edges and their connected nodes
+                edgesView = new vis.DataView(originalData.edges, {
+                    filter: edge => selectedEdgeTypes.includes(edge.type)
+                });
+
+                // Get the filtered edges to find connected nodes
+                const visibleEdges = edgesView.get();
+                const connectedNodeIds = new Set();
+                visibleEdges.forEach(edge => {
+                    connectedNodeIds.add(edge.from);
+                    connectedNodeIds.add(edge.to);
+                });
+
+                nodesView = new vis.DataView(originalData.nodes, {
+                    filter: node => connectedNodeIds.has(node.id)
+                });
+
+            } else if (!allNodesSelected && allEdgesSelected) {
+                console.log("node filtering")
+                // Node filtering only: show selected nodes and all edges between them
+                nodesView = new vis.DataView(originalData.nodes, {
+                    filter: node => selectedNodeTypes.includes(node.typeName)
+                });
+
+                edgesView = new vis.DataView(originalData.edges, {
+                    filter: edge => {
+                        const fromNodeVisible = nodesView.get(edge.from) !== null;
+                        const toNodeVisible = nodesView.get(edge.to) !== null;
+                        return fromNodeVisible && toNodeVisible;
+                    }
+                });
+
+            } else if(!allNodesSelected && !allEdgesSelected) {
+                console.log("both filtering")
+                edgesView = new vis.DataView(originalData.edges, {
+                    filter: edge => selectedEdgeTypes.includes(edge.type)
+                });
+                const visibleEdges = edgesView.get();
+                const connectedNodeIds = new Set();
+                visibleEdges.forEach(edge => {
+                    connectedNodeIds.add(edge.from);
+                    connectedNodeIds.add(edge.to);
+                });
+
+                nodesView = new vis.DataView(originalData.nodes, {
+                    filter: node => connectedNodeIds.has(node.id) && selectedNodeTypes.includes(node.typeName)
+                });
+                
+            } else {
+                console.log("no filtering - showing all nodes and edges")
+                // Show all nodes and edges without any filtering
+                nodesView = new vis.DataView(originalData.nodes);
+                edgesView = new vis.DataView(originalData.edges);
+            }
+
+            // Set data first
+            network.setData({ nodes: nodesView, edges: edgesView });
+            
+            // Check if this is a reset or select all scenario
+            if (isResetOrSelectAllScenario()) {
+                // Apply initial positions for reset/select all
+                const nodeIds = nodesView.getIds();
+                nodeIds.forEach(nodeId => {
+                    if (initialPositions[nodeId]) {
+                        network.moveNode(nodeId, initialPositions[nodeId].x, initialPositions[nodeId].y);
+                    }
+                });
+                // Keep physics disabled to maintain positions
+                network.setOptions({ physics: { enabled: false } });
+                // Fit view to show all nodes
+                network.fit();
+            } else {
+                // For other filters, use physics for better layout
+                network.setOptions({
+                    physics: physicsSettings,
+                });
+
+                // Disable physics after stabilization and fit view
+                network.once('stabilizationIterationsDone', function() {
+                    network.setOptions({ physics: { enabled: false } });
+                    // Fit view to show all filtered nodes
+                    network.fit();
+                });
+
+                // Start stabilization
+                network.stabilize();
+            }
+        }
+        resetButton.addEventListener('click', () => {
+            searchInput.value = '';
+            document.querySelectorAll('#node-type-filter-options input[type="checkbox"], #edge-type-filter-options input[type="checkbox"]').forEach(cb => {
+                const isAllButton = cb.value === 'all';
+                cb.checked = isAllButton;
+            });
+            network.unselectAll();
+            resetVisualFocus(true);
+            applyFilters();
+        });
+        window.addEventListener('resize', () => {
+            network.redraw();
+            network.fit();
+        });
+    </script>
+</body>
+</html>

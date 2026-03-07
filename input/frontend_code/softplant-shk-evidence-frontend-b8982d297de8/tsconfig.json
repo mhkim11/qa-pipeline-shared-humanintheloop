@@ -1,0 +1,29 @@
+{
+  "files": [],
+  "compilerOptions": {
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["*"],
+      "@components/*": ["./components/*"],
+      "@hooks/*": ["./hooks/*"],
+      "@query/*": ["./hooks/react-query/*"],
+      "@stores/*": ["./hooks/stores/*"],
+      "@pages/*": ["./pages/*"],
+      "@constants/*": ["./shared/constants/*"],
+      "@styled/*": ["./shared/styled/*"],
+      "@atoms/*": ["./atoms/*"],
+      "@apis/*": ["./apis/*"],
+      "@type/*": ["./apis/type/*"],
+      "@assets/*": ["./assets/*"],
+      "@lib/*": ["./lib/*"]
+    }
+  },
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ]
+}

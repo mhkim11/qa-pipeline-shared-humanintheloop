@@ -1,0 +1,251 @@
+import { useRef, useState } from 'react';
+
+import { useForm } from 'react-hook-form';
+import { FaExclamationCircle } from 'react-icons/fa';
+import { IoIosClose, IoMdCheckmarkCircle } from 'react-icons/io';
+// import { IoIosClose, IoIosWarning, IoMdCheckmarkCircle } from 'react-icons/io';
+import { IoCloudUploadOutline } from 'react-icons/io5';
+
+import SummaryInput from '@components/evidence/admin/input/summary-input';
+import { fetchUploadSummaryFile } from '@/apis';
+import { onMessageToast } from '@/components/utils';
+interface IEvidenceMatchingModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  selectedProjectId: string;
+  selectedOfficeId: string;
+  onSuccess?: () => void;
+}
+type TForm = {
+  SummaryFile: File[];
+};
+
+export const AdminSummaryModal = ({ isOpen, onClose, selectedProjectId, selectedOfficeId, onSuccess }: IEvidenceMatchingModalProps) => {
+  const { handleSubmit, watch, setValue } = useForm<TForm>({
+    defaultValues: {
+      SummaryFile: [] as unknown as File[],
+    },
+  });
+  const inputFileRef = useRef<HTMLInputElement>(null);
+
+  // 파일 이름 상태 관리
+  const [fileNames, setFileNames] = useState<string[]>([]);
+  const [fileStatuses, setFileStatuses] = useState<Record<string, 'success' | 'failure' | 'uploading' | 'idle'>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [isDragging, setIsDragging] = useState(false);
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+
+    const files = event.dataTransfer.files;
+    if (!files || files.length === 0) return;
+
+    // zip 파일만 허용
+    const file = files[0];
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+
+    if (fileExtension !== 'zip') {
+      onMessageToast({ message: 'ZIP 파일만 업로드 가능합니다.' });
+      return;
+    }
+
+    const maxFileSize = 500 * 1024 * 1024; // 500MB
+    if (file.size > maxFileSize) {
+      onMessageToast({ message: '파일 크기는 500MB 이하여야 합니다.' });
+      return;
+    }
+
+    setValue('SummaryFile', [file]);
+    setFileNames([file.name]);
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+  const onSubmit = async () => {
+    const files = watch('SummaryFile');
+    if (!files || files.length === 0) {
+      onMessageToast({ message: '파일을 선택해주세요.' });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    setFileStatuses((prev) => ({
+      ...prev,
+      [files[0].name]: 'uploading',
+    }));
+    try {
+      const response = await fetchUploadSummaryFile({
+        project_id: selectedProjectId,
+        office_id: selectedOfficeId,
+        file: files[0],
+      });
+
+      if (response.success) {
+        onMessageToast({ message: '파일 업로드 성공' });
+        setFileStatuses({ [files[0].name]: 'success' });
+        setFileNames([]);
+        setValue('SummaryFile', []);
+        onClose();
+        onSuccess?.();
+      } else {
+        onMessageToast({ message: '파일 업로드 실패' });
+        setFileStatuses({ [files[0].name]: 'failure' });
+      }
+    } catch (error) {
+      console.error('업로드 오류:', error);
+      setFileStatuses({ [files[0].name]: 'failure' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  return (
+    <div className={`fixed inset-0 z-20 flex items-center justify-center bg-[#999] bg-opacity-80 ${isOpen ? '' : 'hidden'}`}>
+      <div className='gl:max-h-[700px] relative overflow-scroll rounded-lg border-3 border-[#2B7994] bg-[#fff] shadow-lg lg:max-h-[700px] lg:min-w-[800px] 2xl:max-h-[800px] 2xl:max-w-[900px]'>
+        <div className='pl-5 pt-2 2xl:pt-6'>
+          <h1 className='font-bold'>요약파일 업로드</h1>
+
+          <p>zip파일만 등록할 수 있습니다.</p>
+        </div>
+        <div className='mt-2 flex items-center justify-center pb-[20px]'>
+          <div
+            className={`mt-2 flex items-center justify-center rounded-lg border border-[#4577A4] bg-white lg:min-h-[200px] lg:w-[752px] 2xl:min-h-[250px] ${
+              isDragging ? 'bg-gray-200' : ''
+            }`}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            onDragLeave={handleDragLeave}
+          >
+            <div className='mt-2 2xl:mt-4'>
+              <div className='flex items-center justify-center'>
+                <IoCloudUploadOutline className='text-[40px]' />
+              </div>
+              <div className='mt-2 text-center'>
+                파일 또는 폴더를 여기에 끌어다 놓거나,
+                <br />
+                파일 선택 버튼을 눌러 파일을 직접 선택해주세요
+              </div>
+              <div className='mb-5 flex w-full items-center justify-center 2xl:mt-4'>
+                <div className='h-0 w-full border border-dashed'></div>
+                <div className='flex w-full justify-center'>또는</div>
+                <div className='h-0 w-full border border-dashed'></div>
+              </div>
+              <div className='flex items-center justify-center'>
+                <SummaryInput
+                  inputFileRef={inputFileRef}
+                  watch={watch}
+                  setValue={setValue}
+                  onFileSelect={(newFileNames) => {
+                    setFileNames(newFileNames);
+
+                    // 각 파일에 대해 명시적으로 'idle' 상태 설정
+                    const newFileStatuses = { ...fileStatuses };
+                    newFileNames.forEach((name) => {
+                      // 기존에 상태가 설정되지 않은 파일만 'idle'로 설정
+                      if (!newFileStatuses[name]) {
+                        newFileStatuses[name] = 'idle';
+                      }
+                    });
+                    setFileStatuses(newFileStatuses);
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* 업로드된 파일 이름 표시 */}
+        <div className='pl-5'>
+          <div className='flex w-full items-center'>
+            <h2 className='w-full text-[25px] font-bold'>업로드된 파일</h2>
+            {fileNames.length > 0 && (
+              <div
+                className='mr-6 flex w-full cursor-pointer justify-end'
+                onClick={() => {
+                  setFileNames([]);
+                  setValue('SummaryFile', []);
+                  setFileStatuses({});
+                  // input 파일 요소 초기화
+                  if (inputFileRef.current) {
+                    inputFileRef.current.value = '';
+                  }
+                }}
+              >
+                <IoIosClose className='text-2xl' />
+                <span>전체 파일 삭제</span>
+              </div>
+            )}
+          </div>
+          <div className='mt-4'>
+            {fileNames.length > 0 ? (
+              fileNames.map((name, index) => (
+                <>
+                  <div key={index} className='mb-1 mr-6 flex h-[45px] items-center rounded border border-gray-300 bg-[#EFFBFF] p-1'>
+                    <span className='w-full pl-2'>{name}</span>
+                    <span className='w-20 pr-2 text-right'>
+                      {isSubmitting ? (
+                        <svg
+                          className='mr-2 h-5 w-5 animate-spin text-indigo-500'
+                          xmlns='http://www.w3.org/2000/svg'
+                          fill='none'
+                          viewBox='0 0 24 24'
+                        >
+                          <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
+                          <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z'></path>
+                        </svg>
+                      ) : fileStatuses[name] === 'success' ? (
+                        <IoMdCheckmarkCircle className='text-green-500' />
+                      ) : fileStatuses[name] === 'failure' ? (
+                        <FaExclamationCircle className='text-red-500' />
+                      ) : null}
+                    </span>
+                    <div
+                      className='flex w-20 cursor-pointer items-center text-[15px] text-[#35363A]'
+                      onClick={() => {
+                        // 파일 이름과 파일 리스트에서 삭제
+                        setFileNames((prev) => prev.filter((_, i) => i !== index));
+                        const updatedFiles = watch('SummaryFile').filter((_: any, i: number) => i !== index);
+                        setValue('SummaryFile', updatedFiles);
+                      }}
+                    >
+                      <IoIosClose className='text-2xl' />
+                      삭제
+                    </div>
+                  </div>
+                </>
+              ))
+            ) : (
+              <p className='text-gray-500'></p>
+            )}
+          </div>
+        </div>
+
+        <div className='mt-4 flex items-center justify-center pb-[24px]'>
+          <button
+            type='button'
+            onClick={handleSubmit(onSubmit)}
+            disabled={isSubmitting}
+            className='mt-2 h-[46px] w-[130px] rounded-lg bg-[#4577A4] text-white'
+          >
+            등록
+          </button>
+          <button
+            className={`ml-6 mt-2 h-[46px] w-[130px] rounded-lg border border-[#4577A4] bg-white px-4 py-1 text-[#4577A4] ${
+              isSubmitting ? 'cursor-not-allowed opacity-50' : ''
+            }`}
+            onClick={isSubmitting ? undefined : onClose} // 제출 중일 때 동작하지 않음
+            disabled={isSubmitting}
+          >
+            취소
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
