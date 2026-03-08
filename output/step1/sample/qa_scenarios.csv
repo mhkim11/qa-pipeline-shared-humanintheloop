@@ -22,10 +22,10 @@ SCR-06,서면 작성 에디터,"/case-list/editor?civil_case_id=ccase_01KJ9BX7N9
 SCR-07,증거목록,/evidence/list,로그인 상태,"1. 증거목록 메뉴 클릭
 2. 파일 목록 확인
 3. 정렬/필터 동작 확인",증거 파일 목록 정상 표시,P1,일치
-SCR-08,증거 PDF 뷰어,/evidence/pdf/cdoc_01KK089FYR0HD07J1580F1VXPD,"로그인 상태, 해당 문서 존재","1. 증거목록에서 PDF 항목 클릭
+SCR-08,증거 PDF 뷰어,/evidence/pdf/SAMPLE_DOCUMENT_ID,"로그인 상태, 해당 문서 존재","1. 증거목록에서 PDF 항목 클릭
 2. PDF 뷰어 로드 확인
 3. 페이지 이동 확인","PDF 정상 렌더링, 페이지 이동 동작",P1,일치
-SCR-09,사건 뷰어,/evidence/case-viewer/cdoc_01KK089FYR0HD07J1580F1VXPD,"로그인 상태, 해당 문서 존재","1. 증거목록에서 사건 뷰어 항목 클릭
+SCR-09,사건 뷰어,/evidence/case-viewer/SAMPLE_DOCUMENT_ID,"로그인 상태, 해당 문서 존재","1. 증거목록에서 사건 뷰어 항목 클릭
 2. 뷰어 로드 확인
 3. 사건 정보 표시 확인",사건 뷰어 정상 표시,P1,일치
 SCR-10,AI 분석,/ai,로그인 상태,"1. AI 메뉴 클릭

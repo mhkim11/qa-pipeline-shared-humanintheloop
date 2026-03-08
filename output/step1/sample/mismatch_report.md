@@ -29,4 +29,4 @@
 - SCR-09 — /evidence/pdf/:id → 플레이스홀더: SAMPLE_DOCUMENT_ID
 - SCR-10 — /evidence/case-viewer/:id → 플레이스홀더: SAMPLE_DOCUMENT_ID
 
-> 이 항목은 Step 2 완료 후 자동 업데이트됩니다.
+> 시나리오 CSV의 해당 URL 셀(노란색)을 클릭해서 실제 스테이징 ID로 직접 수정하세요.
