@@ -18,16 +18,25 @@ git -C ~/qa-pipeline_humanintheloop pull origin main
 
 ---
 
+## RUN_ID 확인
+
+```bash
+RUN_ID=$(cat ~/qa-pipeline_humanintheloop/output/latest_run)
+echo "대상 Run: $RUN_ID"
+```
+
+---
+
 ## 입력 파일 위치
 
 ```
-~/qa-pipeline_humanintheloop/output/step1/qa_scenarios.csv
-~/qa-pipeline_humanintheloop/output/step1/qa_definition.md
-~/qa-pipeline_humanintheloop/output/step2/qa_results.csv
-~/qa-pipeline_humanintheloop/output/step2/screenshots/
-~/qa-pipeline_humanintheloop/output/step3/screenshots/
-~/qa-pipeline_humanintheloop/output/step3/capture_errors.log
-~/qa-pipeline_humanintheloop/input/figma_frames/
+~/qa-pipeline_humanintheloop/output/step1/$RUN_ID/qa_scenarios.csv
+~/qa-pipeline_humanintheloop/output/step1/$RUN_ID/qa_definition.md
+~/qa-pipeline_humanintheloop/output/step2/$RUN_ID/qa_results.csv
+~/qa-pipeline_humanintheloop/output/step2/$RUN_ID/screenshots/
+~/qa-pipeline_humanintheloop/output/step3/$RUN_ID/screenshots/
+~/qa-pipeline_humanintheloop/output/step3/$RUN_ID/capture_errors.log
+~/qa-pipeline_humanintheloop/input/figma_frames/$RUN_ID/
 ```
 
 ---
@@ -72,7 +81,7 @@ git -C ~/qa-pipeline_humanintheloop pull origin main
 ## 저장 위치
 
 ```
-~/qa-pipeline_humanintheloop/output/step4/
+~/qa-pipeline_humanintheloop/output/step4/$RUN_ID/
 ```
 
 ---
@@ -80,8 +89,8 @@ git -C ~/qa-pipeline_humanintheloop pull origin main
 ## Git 완료
 
 ```bash
-git -C ~/qa-pipeline_humanintheloop add output/step4/
-git -C ~/qa-pipeline_humanintheloop commit -m "step4: 최종 QA 리포트 생성"
+git -C ~/qa-pipeline_humanintheloop add output/step4/$RUN_ID/
+git -C ~/qa-pipeline_humanintheloop commit -m "step4[$RUN_ID]: 최종 QA 리포트 생성"
 git -C ~/qa-pipeline_humanintheloop push origin main
 ```
 

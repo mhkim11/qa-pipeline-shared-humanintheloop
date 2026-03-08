@@ -709,7 +709,13 @@ function router(req, res) {
         const figmaPath = runId ? `input/figma_frames/${runId}/` : null;
         const commitMsg = runId ? `step1[${runId}]: 검수 후 수정` : 'step1: 검수 후 수정';
 
-        const addTargets = [step1Path, figmaPath].filter(Boolean).join(' ');
+        // latest_run 포인터 파일 갱신
+        if (runId) {
+          fs.writeFileSync(path.join(BASE, 'output', 'latest_run'), runId, 'utf8');
+        }
+
+        const latestRunPath = 'output/latest_run';
+        const addTargets = [step1Path, figmaPath, latestRunPath].filter(Boolean).join(' ');
         execSync(`git -C "${BASE}" add ${addTargets}`, { stdio: 'pipe' });
         execSync(`git -C "${BASE}" commit -m "${commitMsg}"`, { stdio: 'pipe' });
         execSync(`git -C "${BASE}" push origin main`, { stdio: 'pipe' });

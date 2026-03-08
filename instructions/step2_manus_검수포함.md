@@ -25,11 +25,22 @@ STAGING_PW  = softplant1234!
 
 ---
 
+## RUN_ID 확인
+
+```bash
+RUN_ID=$(cat qa-pipeline/output/latest_run)
+echo "대상 Run: $RUN_ID"
+```
+
+> `output/latest_run` 파일은 Step 1 검수 UI에서 **저장 & 커밋** 클릭 시 자동 생성됩니다.
+
+---
+
 ## 입력 파일
 
 ```
-qa-pipeline/output/step1/qa_scenarios.csv
-qa-pipeline/output/step1/qa_definition.md
+qa-pipeline/output/step1/$RUN_ID/qa_scenarios.csv
+qa-pipeline/output/step1/$RUN_ID/qa_definition.md
 ```
 
 > 사람 검수가 완료된 파일 기준입니다. Step 1 검수 완료 후 진행하세요.
@@ -63,8 +74,8 @@ qa-pipeline/output/step1/qa_definition.md
 ## 저장 위치
 
 ```
-qa-pipeline/output/step2/qa_results.csv
-qa-pipeline/output/step2/screenshots/
+qa-pipeline/output/step2/$RUN_ID/qa_results.csv
+qa-pipeline/output/step2/$RUN_ID/screenshots/
 ```
 
 ---
@@ -72,8 +83,8 @@ qa-pipeline/output/step2/screenshots/
 ## Git 완료
 
 ```bash
-git add output/step2/
-git commit -m "step2: Manus QA 실행 결과"
+git add output/step2/$RUN_ID/
+git commit -m "step2[$RUN_ID]: Manus QA 실행 결과"
 git push origin main
 ```
 
