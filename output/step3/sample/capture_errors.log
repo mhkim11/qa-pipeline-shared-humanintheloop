@@ -1,0 +1,16 @@
+[2026-03-08 15:42:11] INFO  로그인 성공 → 세션 유지
+[2026-03-08 15:42:14] OK   00_login_staging.png
+[2026-03-08 15:42:18] OK   01_home_staging.png
+[2026-03-08 15:42:23] OK   02_case-list_staging.png
+[2026-03-08 15:42:27] OK   03_case-request_staging.png
+[2026-03-08 15:42:31] OK   04_case-client-list_staging.png
+[2026-03-08 15:42:35] OK   05_case-editor-list_staging.png
+[2026-03-08 15:42:41] OK   06_case-editor_staging.png
+[2026-03-08 15:42:45] OK   07_evidence-list_staging.png
+[2026-03-08 15:42:51] OK   08_evidence-pdf_staging.png
+[2026-03-08 15:42:57] OK   09_evidence-case-viewer_staging.png
+[2026-03-08 15:43:03] OK   10_ai_staging.png
+[2026-03-08 15:43:07] OK   11_settings_staging.png
+[2026-03-08 15:43:09] OK   12_notifications_staging.png
+[2026-03-08 15:43:11] FAIL 13_memo_staging.png — 로딩 타임아웃 (10초 초과). 네트워크 응답 없음.
+[2026-03-08 15:43:11] INFO 캡처 완료: 13/14 성공, 1 실패

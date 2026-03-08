@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>QA 리포트 — Ailex 스테이징</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; background: #f0f2f5; color: #222; }
+  header { background: #1a1a2e; color: #fff; padding: 20px 32px; }
+  header h1 { font-size: 18px; font-weight: 700; }
+  header p { font-size: 12px; color: #aaa; margin-top: 4px; }
+  .container { max-width: 1200px; margin: 24px auto; padding: 0 24px; }
+
+  .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  .card { background: #fff; border-radius: 8px; padding: 16px 20px; border: 1px solid #e0e0e0; }
+  .card .label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.3px; }
+  .card .value { font-size: 28px; font-weight: 700; margin-top: 4px; }
+  .card.pass .value { color: #1e8449; }
+  .card.fail .value { color: #c0392b; }
+  .card.block .value { color: #d68910; }
+  .card.rate .value { color: #2d62b0; }
+
+  section { background: #fff; border-radius: 8px; border: 1px solid #e0e0e0; margin-bottom: 20px; overflow: hidden; }
+  section h2 { font-size: 13px; font-weight: 600; padding: 14px 20px; background: #f8f9fa; border-bottom: 1px solid #e0e0e0; color: #1a1a2e; }
+
+  .filter-bar { padding: 10px 20px; display: flex; gap: 8px; border-bottom: 1px solid #f0f0f0; }
+  .filter-btn { padding: 4px 12px; border-radius: 4px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 11px; font-weight: 500; }
+  .filter-btn.active { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { background: #f0f4f8; padding: 8px 12px; text-align: left; font-weight: 600; font-size: 11px; color: #555; text-transform: uppercase; border-bottom: 2px solid #d8e2ed; white-space: nowrap; }
+  td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr.fail td { background: #fff5f5; }
+  tr.block td { background: #fffbf0; }
+  tr:hover td { filter: brightness(0.97); }
+
+  .badge { padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: 700; }
+  .badge-success { background: #eafaf1; color: #1e8449; }
+  .badge-fail { background: #fdecea; color: #c0392b; }
+  .badge-block { background: #fef3e2; color: #d68910; }
+  .badge-p1 { background: #fdecea; color: #c0392b; }
+  .badge-p2 { background: #fef3e2; color: #d68910; }
+  .badge-p3 { background: #eafaf1; color: #1e8449; }
+  .badge-major { background: #fdecea; color: #c0392b; }
+  .badge-minor { background: #fef3e2; color: #d68910; }
+
+  .issues { padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+  .issue-card { border: 1px solid #e0e0e0; border-radius: 6px; padding: 14px 16px; border-left: 4px solid #ccc; }
+  .issue-card.major { border-left-color: #c0392b; }
+  .issue-card.minor { border-left-color: #d68910; }
+  .issue-title { font-weight: 600; font-size: 13px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+  .issue-meta { font-size: 11px; color: #777; display: flex; gap: 16px; flex-wrap: wrap; }
+  .issue-meta span strong { color: #444; }
+  .issue-steps { margin-top: 8px; font-size: 11px; background: #f8f8f8; padding: 8px 12px; border-radius: 4px; color: #555; white-space: pre-line; }
+
+  .recommend { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
+  .rec-item { display: flex; gap: 12px; align-items: flex-start; padding: 10px 14px; border-radius: 6px; background: #f8f9fa; }
+  .rec-num { width: 22px; height: 22px; border-radius: 50%; background: #1a1a2e; color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .rec-content strong { font-size: 12px; display: block; margin-bottom: 3px; }
+  .rec-content p { font-size: 11px; color: #666; }
+
+  .log-box { padding: 16px 20px; font-family: 'Menlo', 'Courier New', monospace; font-size: 11px; color: #444; line-height: 1.8; background: #fafafa; }
+  .log-ok { color: #1e8449; }
+  .log-fail { color: #c0392b; font-weight: 600; }
+  .log-info { color: #888; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>QA 리포트 — Ailex 스테이징</h1>
+  <p>실행 일시: 2026-03-08 &nbsp;|&nbsp; 대상: https://staging.ailex.co.kr &nbsp;|&nbsp; Run: sample</p>
+</header>
+
+<div class="container">
+
+  <!-- 요약 카드 -->
+  <div class="summary-grid">
+    <div class="card"><div class="label">전체 시나리오</div><div class="value">14</div></div>
+    <div class="card pass"><div class="label">성공</div><div class="value">12</div></div>
+    <div class="card fail"><div class="label">실패</div><div class="value">1</div></div>
+    <div class="card block"><div class="label">블로킹</div><div class="value">1</div></div>
+    <div class="card rate" style="grid-column:span 4"><div class="label">패스율</div><div class="value">85.7%</div></div>
+  </div>
+
+  <!-- 시나리오 결과 테이블 -->
+  <section>
+    <h2>시나리오 실행 결과</h2>
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="filterTable('all', this)">전체</button>
+      <button class="filter-btn" onclick="filterTable('성공', this)">성공</button>
+      <button class="filter-btn" onclick="filterTable('실패', this)">실패</button>
+      <button class="filter-btn" onclick="filterTable('블로킹', this)">블로킹</button>
+    </div>
+    <table id="result-table">
+      <thead>
+        <tr><th>시나리오ID</th><th>화면명</th><th>우선순위</th><th>결과</th><th>심각도</th><th>실패원인</th><th>검토필요</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>SCR-00</td><td>로그인</td><td><span class="badge badge-p1">P1</span></td><td><span class="badge badge-success">성공</span></td><td></td><td></td><td></td></tr>
+        <tr><td>SCR-01</td><td>홈</td><td><span class="badge badge-p1">P1</span></td><td><span class="badge badge-success">성공</span></td><td></td><td></td><td></td></tr>
+        <tr><td>SCR-02</td><td>사건목록</td><td><span class="badge badge-p1">P1</span></td><td><span class="badge badge-success">성공</span></td><td></td><td></td><td></td></tr>
+        <tr><td>SCR-03</td><td>사건목록 > 의뢰인 요청</td><td><span class="badge badge-p1">P1</span></td><td><span class="badge badge-success">성공</span></td><td></td><td></td><td></td></tr>
+        <tr><td>SCR-04</td><td>사건목록 > 의뢰인 목록</td><td><span class="badge badge-p2">P2</span></td><td><span class="badge badge-success">성공</span></td><td></td><td></td><td></td></tr>
+        <tr><td>SCR-05</td><td>사건목록 > 편집자</td><td><span class="badge badge-p2">P2</span></td><td><span class="badge badge-success">성공</span></td><td></td><td></td><td></td></tr>
+        <tr class="fail"><td>SCR-06</td><td>서면 작성 에디터</td><td><span class="badge badge-p1">P1</span></td><td><span class="badge badge-fail">실패</span></td><td><span class="badge badge-major">Major</span></td><td>저장 버튼 클릭 후 500 에러</td><td></td></tr>
+        <tr><td>SCR-07</td><td>증거목록</td><td><span class="badge badge-p1">P1</span></td><td><span class="badge badge-success">성공</span></td><td></td><td></td><td></td></tr>
+        <tr class="block"><td>SCR-08</td><td>증거 PDF 뷰어</td><td><span class="badge badge-p1">P1</span></td><td><span class="badge badge-block">블로킹</span></td><td><span class="badge badge-minor">Minor</span></td><td>다음 페이지 버튼 미동작</td><td>Y</td></tr>
+        <tr><td>SCR-09</td><td>사건 뷰어</td><td><span class="badge badge-p1">P1</span></td><td><span class="badge badge-success">성공</span></td><td></td><td></td><td></td></tr>
+        <tr><td>SCR-10</td><td>AI 분석</td><td><span class="badge badge-p2">P2</span></td><td><span class="badge badge-success">성공</span></td><td></td><td></td><td></td></tr>
+        <tr><td>SCR-11</td><td>설정</td><td><span class="badge badge-p3">P3</span></td><td><span class="badge badge-success">성공</span></td><td></td><td></td><td></td></tr>
+        <tr><td>SCR-12</td><td>알림</td><td><span class="badge badge-p3">P3</span></td><td><span class="badge badge-success">성공</span></td><td></td><td></td><td></td></tr>
+        <tr><td>SCR-13</td><td>메모</td><td><span class="badge badge-p3">P3</span></td><td><span class="badge badge-success">성공</span></td><td></td><td></td><td></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 이슈 목록 -->
+  <section>
+    <h2>이슈 상세</h2>
+    <div class="issues">
+      <div class="issue-card major">
+        <div class="issue-title">
+          <span class="badge badge-major">Major</span>
+          SCR-06 — 서면 작성 에디터 저장 실패
+        </div>
+        <div class="issue-meta">
+          <span><strong>예상 원인:</strong> 서버 사이드 문서 저장 로직 오류</span>
+          <span><strong>스크린샷:</strong> screenshots/SCR-06_failure.png</span>
+        </div>
+        <div class="issue-steps">재현 경로:
+1. 편집자 탭 진입
+2. 서면 작성 버튼 클릭
+3. 텍스트 입력
+4. 저장 클릭 → 에러 토스트 표시 (500 Internal Server Error)</div>
+      </div>
+      <div class="issue-card minor">
+        <div class="issue-title">
+          <span class="badge badge-minor">Minor</span>
+          SCR-08 — PDF 뷰어 페이지 이동 버튼 미동작
+        </div>
+        <div class="issue-meta">
+          <span><strong>예상 원인:</strong> 이벤트 핸들러 미연결 또는 PDF.js 렌더링 오류</span>
+          <span><strong>스크린샷:</strong> screenshots/SCR-08_blocking.png</span>
+        </div>
+        <div class="issue-steps">재현 경로:
+1. PDF 뷰어 진입 (/evidence/pdf/:id)
+2. 다음 페이지 버튼 클릭
+3. 페이지 변경 없음 — 무반응</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 개선 권고사항 -->
+  <section>
+    <h2>개선 권고사항</h2>
+    <div class="recommend">
+      <div class="rec-item">
+        <div class="rec-num">1</div>
+        <div class="rec-content">
+          <strong>[즉시 처리] SCR-06 서면 저장 API 오류</strong>
+          <p>POST /api/documents → 500 응답. 핵심 기능 불가 상태로 즉시 수정 필요.</p>
+        </div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">2</div>
+        <div class="rec-content">
+          <strong>[우선 처리] SCR-08 PDF 뷰어 페이지 이동</strong>
+          <p>다음 페이지 버튼 클릭 시 반응 없음. PDF.js 이벤트 바인딩 점검 필요.</p>
+        </div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">3</div>
+        <div class="rec-content">
+          <strong>[모니터링] 메모 화면 로딩 지연</strong>
+          <p>Step 3 캡처 시 10초 타임아웃. API 응답 시간 점검 권고.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 캡처 오류 로그 -->
+  <section>
+    <h2>Step 3 캡처 로그</h2>
+    <div class="log-box">
+      <div class="log-info">[2026-03-08 15:42:11] INFO  로그인 성공 → 세션 유지</div>
+      <div class="log-ok">[2026-03-08 15:42:14] OK   00_login_staging.png</div>
+      <div class="log-ok">[2026-03-08 15:42:18] OK   01_home_staging.png</div>
+      <div class="log-ok">[2026-03-08 15:42:23] OK   02_case-list_staging.png</div>
+      <div class="log-ok">[2026-03-08 15:42:41] OK   06_case-editor_staging.png</div>
+      <div class="log-ok">[2026-03-08 15:42:45] OK   07_evidence-list_staging.png</div>
+      <div class="log-ok">[2026-03-08 15:42:51] OK   08_evidence-pdf_staging.png</div>
+      <div class="log-ok">[2026-03-08 15:43:09] OK   12_notifications_staging.png</div>
+      <div class="log-fail">[2026-03-08 15:43:11] FAIL 13_memo_staging.png — 로딩 타임아웃 (10초 초과)</div>
+      <div class="log-info">[2026-03-08 15:43:11] INFO 캡처 완료: 13/14 성공, 1 실패</div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+function filterTable(filter, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('#result-table tbody tr').forEach(row => {
+    if (filter === 'all') { row.style.display = ''; return; }
+    const result = row.querySelector('td:nth-child(4)').textContent.trim();
+    row.style.display = result === filter ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>

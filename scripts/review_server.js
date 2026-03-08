@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * scripts/review_server.js
- * Step 1 검수 웹 UI
+ * Step 1 / Step 2 검수 웹 UI
  * 사용법: node scripts/review_server.js
  */
 
@@ -13,15 +13,18 @@ const { execSync } = require('child_process');
 const PORT = 3000;
 const BASE = path.resolve(process.env.HOME, 'qa-pipeline_humanintheloop');
 const STEP1_BASE = path.join(BASE, 'output', 'step1');
+const STEP2_BASE = path.join(BASE, 'output', 'step2');
 const FIGMA_BASE = path.join(BASE, 'input', 'figma_frames');
 const IMG_EXTS = new Set(['.png', '.jpg', '.jpeg', '.webp']);
 const RUN_PATTERN = /^\d{10}$/;
+
+// ── Step 1 디렉토리 헬퍼 ──────────────────────────────────
 
 function getRunDirs() {
   if (!fs.existsSync(STEP1_BASE)) return [];
   return fs.readdirSync(STEP1_BASE)
     .filter(f => RUN_PATTERN.test(f) && fs.statSync(path.join(STEP1_BASE, f)).isDirectory())
-    .sort().reverse(); // 최신 순
+    .sort().reverse();
 }
 
 function getRunDir(runId) {
@@ -36,6 +39,14 @@ function getFigmaDir(runId) {
     if (fs.existsSync(p)) return p;
   }
   return FIGMA_BASE;
+}
+
+// ── Step 2 디렉토리 헬퍼 ──────────────────────────────────
+
+function getStep2Dir(runId) {
+  if (runId && RUN_PATTERN.test(runId)) return path.join(STEP2_BASE, runId);
+  const runs = getRunDirs();
+  return runs.length ? path.join(STEP2_BASE, runs[0]) : STEP2_BASE;
 }
 
 // ── CSV ──────────────────────────────────────────────────
@@ -75,6 +86,17 @@ function writeFile(name, content, runId) {
   fs.writeFileSync(path.join(dir, name), content, 'utf8');
 }
 
+function readStep2File(name, runId) {
+  const p = path.join(getStep2Dir(runId), name);
+  return fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : '';
+}
+
+function writeStep2File(name, content, runId) {
+  const dir = getStep2Dir(runId);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, name), content, 'utf8');
+}
+
 // ── HTML ──────────────────────────────────────────────────
 
 const HTML = `<!DOCTYPE html>
@@ -82,7 +104,7 @@ const HTML = `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Step 1 검수</title>
+<title>QA 검수 UI</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; background: #f0f2f5; color: #222; height: 100vh; overflow: hidden; }
@@ -97,6 +119,12 @@ const HTML = `<!DOCTYPE html>
   header h1 { font-size: 14px; font-weight: 600; flex: 1; letter-spacing: -0.3px; }
   header h1 span { color: #7eb8f7; }
   #status-text { font-size: 11px; color: #888; }
+
+  /* 스텝 전환 */
+  .step-switcher { display: flex; gap: 3px; background: #2a2a40; border-radius: 5px; padding: 3px; }
+  .step-btn { padding: 4px 12px; border: none; border-radius: 3px; cursor: pointer; font-size: 11px; font-weight: 500; color: #888; background: transparent; transition: all 0.15s; white-space: nowrap; }
+  .step-btn.active { background: #3a7bd5; color: #fff; }
+  .step-btn:hover:not(.active) { color: #ccc; }
 
   .btn { padding: 7px 16px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: 500; transition: background 0.15s; }
   .btn-save { background: #3a7bd5; color: #fff; }
@@ -262,26 +290,69 @@ const HTML = `<!DOCTYPE html>
     background: #fffbe6; border: 1px solid #ffe58f; border-radius: 5px;
     font-size: 12px; color: #875300; display: flex; align-items: center; gap: 8px;
   }
-  .placeholder-banner strong { font-weight: 600; }
   td.has-placeholder { background: #fffbe6 !important; }
   td.has-placeholder:focus { background: #fff7cc !important; }
+
+  /* ── Step 2 전용 스타일 ─────────────────────────────── */
+
+  /* 실행결과 배지 */
+  .badge { padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: 700; }
+  .badge-success { background: #eafaf1; color: #1e8449; }
+  .badge-fail    { background: #fdecea; color: #c0392b; }
+  .badge-block   { background: #fef3e2; color: #d68910; }
+
+  /* 심각도 배지 */
+  .badge-critical { background: #fdecea; color: #c0392b; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 700; }
+  .badge-major    { background: #fef3e2; color: #d68910; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 700; }
+  .badge-minor    { background: #fff9e6; color: #9a7200; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 700; }
+
+  /* Step4포함 토글 */
+  .badge-step4-y { background: #e8f4fd; color: #2d62b0; padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: 700; cursor: pointer; }
+  .badge-step4-n { background: #f0f0f0; color: #999;    padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: 700; cursor: pointer; }
+
+  /* 심각도 select */
+  .severity-select { border: 1px solid #ddd; border-radius: 3px; padding: 2px 4px; font-size: 11px; background: #fff; cursor: pointer; }
+
+  /* Step 2 요약 바 */
+  .step2-summary { display: flex; gap: 16px; padding: 0 0 8px; font-size: 12px; flex-shrink: 0; }
+  .sum-total  { color: #444; font-weight: 600; }
+  .sum-pass   { color: #1e8449; font-weight: 600; }
+  .sum-fail   { color: #c0392b; font-weight: 600; }
+  .sum-block  { color: #d68910; font-weight: 600; }
+  .sum-step4  { color: #2d62b0; font-weight: 600; }
+
+  /* Step 2 필터 바 */
+  .filter-bar { display: flex; gap: 6px; padding: 8px 0; flex-shrink: 0; }
+  .filter-btn { padding: 4px 12px; border-radius: 4px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 11px; font-weight: 500; }
+  .filter-btn.active { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+
+  /* Step 2 실패/블로킹 행 */
+  tr.row-fail td   { background: #fff5f5; }
+  tr.row-block td  { background: #fffbf0; }
+  tr.row-fail:hover td  { background: #fdecea; }
+  tr.row-block:hover td { background: #fef3e2; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Step 1 검수 <span>/ QA Pipeline</span></h1>
-  <select id="run-select" onchange="loadRun(this.value)" style="padding:5px 8px;border-radius:4px;border:1px solid #444;background:#2a2a40;color:#ccc;font-size:12px;cursor:pointer">
+  <h1>QA 검수 <span>/ Pipeline</span></h1>
+  <div class="step-switcher">
+    <button id="step-btn-1" class="step-btn active" onclick="switchStep(1)">Step 1 검수</button>
+    <button id="step-btn-2" class="step-btn" onclick="switchStep(2)">Step 2 검수</button>
+  </div>
+  <select id="run-select" onchange="onRunChange(this.value)" style="padding:5px 8px;border-radius:4px;border:1px solid #444;background:#2a2a40;color:#ccc;font-size:12px;cursor:pointer">
     <option value="">실행 목록 로딩중...</option>
   </select>
   <span id="status-text"></span>
-  <button class="btn btn-save" onclick="saveAll()">저장</button>
-  <button class="btn btn-commit" onclick="doCommit()">저장 &amp; 커밋</button>
+  <button class="btn btn-save" onclick="currentStep===1?saveAll():saveStep2()">저장</button>
+  <button class="btn btn-commit" onclick="currentStep===1?doCommit():doCommit2()">저장 &amp; 커밋</button>
 </header>
 
+<!-- ── Step 1 검수 ──────────────────────────────────────── -->
+<div id="step1-view">
 <div class="layout">
 
-  <!-- 사이드바: 참고 자료 -->
   <div class="sidebar">
     <div class="sidebar-tabs">
       <div class="stab active" onclick="showSTab(0, this)">불일치 리포트</div>
@@ -299,7 +370,6 @@ const HTML = `<!DOCTYPE html>
     </div>
   </div>
 
-  <!-- 메인: 편집 영역 -->
   <div class="main">
     <div class="tabs">
       <div class="tab active" onclick="showTab(0, this)">시나리오 CSV</div>
@@ -319,6 +389,41 @@ const HTML = `<!DOCTYPE html>
   </div>
 
 </div>
+</div>
+
+<!-- ── Step 2 검수 ──────────────────────────────────────── -->
+<div id="step2-view" style="display:none">
+<div class="layout">
+
+  <div class="sidebar">
+    <div class="sidebar-tabs">
+      <div class="stab active">추가 버그</div>
+    </div>
+    <div class="sidebar-pane active md" id="s2-extra-bugs">
+      <div class="loading">불러오는 중...</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="tabs">
+      <div class="tab active">QA 결과</div>
+    </div>
+    <div class="panel active" id="panel-step2" style="gap:0">
+      <div class="step2-summary" id="step2-summary"></div>
+      <div class="filter-bar">
+        <button class="filter-btn active" onclick="filterStep2('all',this)">전체</button>
+        <button class="filter-btn" onclick="filterStep2('성공',this)">성공</button>
+        <button class="filter-btn" onclick="filterStep2('실패',this)">실패</button>
+        <button class="filter-btn" onclick="filterStep2('블로킹',this)">블로킹</button>
+      </div>
+      <div class="table-container" id="step2-table-container">
+        <div class="loading">불러오는 중...</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
 
 <div id="toast"></div>
 
@@ -328,10 +433,14 @@ const HTML = `<!DOCTYPE html>
 </div>
 
 <script>
-let state = { scenarios: { headers: [], rows: [] }, definition: '', spec: '' };
-let currentRun = '';
+// ── 상태 ──────────────────────────────────────────────────
+let state  = { scenarios: { headers: [], rows: [] }, definition: '', spec: '' };
+let state2 = { results: { headers: [], rows: [] }, extraBugs: '' };
+let currentRun  = '';
+let currentStep = 1;
+let step2Loaded = false;
 
-// ── 실행 목록 로드 ────────────────────────────────────
+// ── 실행 목록 초기 로드 ───────────────────────────────────
 fetch('/api/runs')
   .then(r => r.json())
   .then(runs => {
@@ -344,8 +453,38 @@ fetch('/api/runs')
     sel.innerHTML = runs.map((r, i) =>
       \`<option value="\${r}">\${r.replace(/^(\\d{2})(\\d{2})(\\d{2})(\\d{2})(\\d{2})$/, '20$1-$2-$3 $4:$5')}\${i === 0 ? ' (최신)' : ''}</option>\`
     ).join('');
+    currentRun = runs[0];
     loadRun(runs[0]);
   });
+
+// ── Run 변경 (스텝 공통) ─────────────────────────────────
+function onRunChange(runId) {
+  currentRun = runId;
+  step2Loaded = false;
+  if (currentStep === 1) {
+    loadRun(runId);
+  } else {
+    loadStep2Run(runId);
+  }
+}
+
+// ── 스텝 전환 ─────────────────────────────────────────────
+function switchStep(n) {
+  currentStep = n;
+  document.getElementById('step1-view').style.display = n === 1 ? '' : 'none';
+  document.getElementById('step2-view').style.display = n === 2 ? '' : 'none';
+  document.getElementById('step-btn-1').classList.toggle('active', n === 1);
+  document.getElementById('step-btn-2').classList.toggle('active', n === 2);
+  document.getElementById('status-text').textContent = '';
+  if (n === 2 && !step2Loaded) {
+    loadStep2Run(currentRun);
+  }
+  if (n === 1) updateStatus();
+}
+
+// ════════════════════════════════════════════════════════════
+//  STEP 1
+// ════════════════════════════════════════════════════════════
 
 function loadRun(runId) {
   currentRun = runId;
@@ -374,13 +513,12 @@ function loadRun(runId) {
     .catch(() => toast('데이터 로드 실패.', 'error'));
 }
 
-// ── 상태 표시 ─────────────────────────────────────────
 function updateStatus() {
   const rows = state.scenarios.rows.length;
   document.getElementById('status-text').textContent = rows ? \`시나리오 \${rows}건\` : '';
 }
 
-// ── 마크다운 렌더 ─────────────────────────────────────
+// ── 마크다운 렌더 ─────────────────────────────────────────
 function renderMd(id, md, emptyMsg) {
   const el = document.getElementById(id);
   if (!md || !md.trim()) {
@@ -406,7 +544,7 @@ function renderMd(id, md, emptyMsg) {
   el.innerHTML = html;
 }
 
-// ── 테이블 렌더 ───────────────────────────────────────
+// ── 시나리오 테이블 렌더 ──────────────────────────────────
 function renderTable() {
   const container = document.getElementById('table-container');
   const { headers, rows } = state.scenarios;
@@ -430,8 +568,7 @@ function renderTable() {
     bannerEl.style.display = 'none';
   }
 
-  // 컬럼 인덱스
-  const priIdx = headers.findIndex(h => h.includes('우선순위'));
+  const priIdx      = headers.findIndex(h => h.includes('우선순위'));
   const mismatchIdx = headers.findIndex(h => h.includes('피그마일치여부'));
 
   const thHtml = headers.map(h => \`<th>\${h}</th>\`).join('') + '<th style="width:50px"></th>';
@@ -488,41 +625,37 @@ function delRow(ri) {
   renderTable();
 }
 
-// ── 탭 전환 ───────────────────────────────────────────
+// ── 탭 전환 ───────────────────────────────────────────────
 function showTab(idx, el) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#step1-view .tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('#step1-view .panel').forEach(p => p.classList.remove('active'));
   el.classList.add('active');
-  document.querySelectorAll('.panel')[idx].classList.add('active');
+  document.querySelectorAll('#step1-view .panel')[idx].classList.add('active');
 }
 
 function showSTab(idx, el) {
-  document.querySelectorAll('.stab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.sidebar-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#step1-view .stab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('#step1-view .sidebar-pane').forEach(p => p.classList.remove('active'));
   el.classList.add('active');
-  document.querySelectorAll('.sidebar-pane')[idx].classList.add('active');
+  document.querySelectorAll('#step1-view .sidebar-pane')[idx].classList.add('active');
 }
 
-// ── Mismatch 리포트 보강 ──────────────────────────────
-
+// ── Mismatch 리포트 보강 ──────────────────────────────────
 function enhanceMismatch(frames) {
   const el = document.getElementById('s-mismatch');
 
-  // 1. 동적 경로 ID 섹션에 안내 뱃지 추가
   el.querySelectorAll('h2, h3').forEach(h => {
     if (h.textContent.includes('동적 경로 ID')) {
       h.innerHTML += '<span class="badge-info">Step 2 이후 자동 업데이트</span>';
     }
   });
 
-  // 2. SCR-XX 참조에 시나리오 삭제 버튼 추가
   el.querySelectorAll('li, p').forEach(node => {
-    node.innerHTML = node.innerHTML.replace(/\b(SCR-\d+)\b/g, (match) => {
+    node.innerHTML = node.innerHTML.replace(/\\b(SCR-\\d+)\\b/g, (match) => {
       return \`<strong>\${match}</strong> <button class="btn-sm btn-del" onclick="deleteScenario('\${match}')">시나리오 삭제</button>\`;
     });
   });
 
-  // 3. "피그마에만 있는 화면" 섹션 아래 항목별 이미지 인라인 삽입
   if (!frames.length) return;
   let inFigmaSection = false;
   el.querySelectorAll('h2, h3, li, p').forEach(node => {
@@ -534,13 +667,11 @@ function enhanceMismatch(frames) {
       inFigmaSection = false; return;
     }
     if ((tag === 'li' || tag === 'p') && inFigmaSection) {
-      // li 텍스트에서 파일명 추출 (백틱 혹은 "프레임:" 이후)
       const text = node.textContent;
-      const filenameMatch = text.match(/프레임[:\\s]+([\\w가-힣.\\-_]+\\.(?:png|jpg|jpeg|webp))/i)
+      const filenameMatch = text.match(/프레임[:\\s]+[\\w가-힣.\\-_]+\\.(?:png|jpg|jpeg|webp)/i)
         || text.match(/\`([\\w가-힣.\\-_]+\\.(?:png|jpg|jpeg|webp))\`/i);
       let matched = filenameMatch ? frames.find(f => f === filenameMatch[1]) : null;
 
-      // 파일명 명시 없으면 li 텍스트 키워드로 퍼지 매칭
       if (!matched) {
         const keywords = text.toLowerCase().replace(/[^a-z0-9가-힣]/g, ' ').split(/\\s+/).filter(k => k.length > 1);
         matched = frames.find(f => keywords.some(k => f.toLowerCase().includes(k)));
@@ -568,20 +699,11 @@ function deleteScenario(scenarioId) {
   toast(\`\${scenarioId} 삭제됨\`, 'success');
 }
 
-function openLightbox(src) {
-  document.getElementById('lightbox-img').src = src;
-  document.getElementById('lightbox').classList.add('show');
-}
-
-function closeLightbox() {
-  document.getElementById('lightbox').classList.remove('show');
-}
-
-// ── 기획서 초안 토글 ──────────────────────────────────
+// ── 기획서 초안 토글 ──────────────────────────────────────
 function toggleSpecEdit() {
-  const view = document.getElementById('s-spec-view');
+  const view   = document.getElementById('s-spec-view');
   const editor = document.getElementById('s-spec-editor');
-  const btn = document.getElementById('spec-toggle');
+  const btn    = document.getElementById('spec-toggle');
   const isEditing = editor.style.display !== 'none';
   if (isEditing) {
     state.spec = editor.value;
@@ -598,7 +720,7 @@ function toggleSpecEdit() {
   }
 }
 
-// ── 저장 ─────────────────────────────────────────────
+// ── Step 1 저장 ───────────────────────────────────────────
 async function saveAll() {
   state.definition = document.getElementById('def-editor').value;
   const specEditor = document.getElementById('s-spec-editor');
@@ -616,7 +738,7 @@ async function saveAll() {
   }
 }
 
-// ── 커밋 ─────────────────────────────────────────────
+// ── Step 1 커밋 ───────────────────────────────────────────
 async function doCommit() {
   await saveAll();
   if (!confirm('git commit & push 하시겠습니까?\\n\\n메시지: "step1: 검수 후 수정"')) return;
@@ -633,7 +755,172 @@ async function doCommit() {
   }
 }
 
-// ── 토스트 ───────────────────────────────────────────
+// ════════════════════════════════════════════════════════════
+//  STEP 2
+// ════════════════════════════════════════════════════════════
+
+function loadStep2Run(runId) {
+  step2Loaded = true;
+  fetch(\`/api/step2/data?\${runId ? 'run=' + runId : ''}\`)
+    .then(r => r.json())
+    .then(data => {
+      state2.results  = data.results  || { headers: [], rows: [] };
+      state2.extraBugs = data.extraBugs || '';
+
+      // 심각도, Step4포함 컬럼이 없으면 추가
+      ['심각도', 'Step4포함'].forEach(col => {
+        if (!state2.results.headers.includes(col)) {
+          state2.results.headers.push(col);
+          const def = col === 'Step4포함' ? 'Y' : '';
+          state2.results.rows.forEach(r => r.push(def));
+        }
+      });
+
+      renderMd('s2-extra-bugs', state2.extraBugs,
+        '시나리오 외 추가 버그 없음\\n(extra_bugs.md 파일이 없거나 비어 있습니다)');
+      renderStep2Table();
+    })
+    .catch(() => toast('Step 2 데이터 로드 실패.', 'error'));
+}
+
+function renderStep2Table() {
+  const container = document.getElementById('step2-table-container');
+  const { headers, rows } = state2.results;
+
+  if (!headers.length) {
+    container.innerHTML = \`
+      <div class="loading" style="flex-direction:column;gap:8px">
+        <div>qa_results.csv 파일이 없습니다.</div>
+        <div style="font-size:11px;color:#bbb">Step 2 실행 후 다시 확인하세요.</div>
+      </div>\`;
+    document.getElementById('step2-summary').innerHTML = '';
+    return;
+  }
+
+  const resultIdx   = headers.findIndex(h => h === '실행결과');
+  const severityIdx = headers.findIndex(h => h === '심각도');
+  const step4Idx    = headers.findIndex(h => h === 'Step4포함');
+  const shotIdx     = headers.findIndex(h => h === '스크린샷경로');
+
+  // 요약 바
+  const total  = rows.length;
+  const pass   = rows.filter(r => r[resultIdx] === '성공').length;
+  const fail   = rows.filter(r => r[resultIdx] === '실패').length;
+  const block  = rows.filter(r => r[resultIdx] === '블로킹').length;
+  const step4c = rows.filter(r => step4Idx >= 0 && r[step4Idx] !== 'N').length;
+  document.getElementById('step2-summary').innerHTML =
+    \`<span class="sum-total">전체 \${total}건</span>
+     <span class="sum-pass">✓ 성공 \${pass}</span>
+     <span class="sum-fail">✗ 실패 \${fail}</span>
+     <span class="sum-block">⚠ 블로킹 \${block}</span>
+     <span class="sum-step4">Step4 포함: \${step4c}건</span>\`;
+
+  const thHtml = headers.map(h => \`<th>\${escHtml(h)}</th>\`).join('');
+  const tbodyHtml = rows.map((row, ri) => {
+    const result = row[resultIdx] || '';
+    const rowClass = result === '실패' ? ' class="row-fail"' : result === '블로킹' ? ' class="row-block"' : '';
+
+    const cells = row.map((cell, ci) => {
+      // 실행결과
+      if (ci === resultIdx) {
+        const cls = cell === '성공' ? 'badge-success' : cell === '실패' ? 'badge-fail' : cell === '블로킹' ? 'badge-block' : '';
+        return \`<td>\${cls ? \`<span class="badge \${cls}">\${escHtml(cell)}</span>\` : escHtml(cell)}</td>\`;
+      }
+      // 심각도 select
+      if (ci === severityIdx) {
+        const opts = ['', 'Critical', 'Major', 'Minor']
+          .map(v => \`<option value="\${v}" \${cell === v ? 'selected' : ''}>\${v || '—'}</option>\`)
+          .join('');
+        return \`<td><select class="severity-select" onchange="updateStep2Cell(this,\${ri},\${ci})">\${opts}</select></td>\`;
+      }
+      // Step4포함 토글
+      if (ci === step4Idx) {
+        const isY = cell !== 'N';
+        return \`<td style="text-align:center"><span class="badge \${isY ? 'badge-step4-y' : 'badge-step4-n'}" onclick="toggleStep4(\${ri})" title="클릭하여 전환">\${isY ? 'Y' : 'N'}</span></td>\`;
+      }
+      // 스크린샷 썸네일
+      if (ci === shotIdx && cell) {
+        const fname = cell.replace(/^screenshots\\//, '');
+        const src = \`/step2-shot/\${encodeURIComponent(fname)}?run=\${encodeURIComponent(currentRun)}\`;
+        return \`<td><img src="\${src}" style="height:36px;cursor:zoom-in;border-radius:3px" loading="lazy" onclick="openLightbox(this.src)" onerror="this.parentNode.textContent=''"></td>\`;
+      }
+      // 기본 편집 가능 셀
+      return \`<td contenteditable="true" data-row="\${ri}" data-col="\${ci}" onblur="updateStep2Cell(this,\${ri},\${ci})">\${escHtml(cell)}</td>\`;
+    }).join('');
+
+    return \`<tr\${rowClass}>\${cells}</tr>\`;
+  }).join('');
+
+  container.innerHTML = \`<table><thead><tr>\${thHtml}</tr></thead><tbody>\${tbodyHtml}</tbody></table>\`;
+}
+
+function updateStep2Cell(el, ri, ci) {
+  state2.results.rows[ri][ci] = el.value !== undefined && el.tagName === 'SELECT'
+    ? el.value
+    : el.innerText.trim();
+}
+
+function toggleStep4(ri) {
+  const idx = state2.results.headers.findIndex(h => h === 'Step4포함');
+  if (idx === -1) return;
+  state2.results.rows[ri][idx] = state2.results.rows[ri][idx] === 'N' ? 'Y' : 'N';
+  renderStep2Table();
+}
+
+function filterStep2(filter, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const resultIdx = state2.results.headers.findIndex(h => h === '실행결과');
+  document.querySelectorAll('#step2-table-container tbody tr').forEach(row => {
+    if (filter === 'all') { row.style.display = ''; return; }
+    const cell = row.querySelectorAll('td')[resultIdx];
+    const result = cell ? cell.textContent.trim() : '';
+    row.style.display = result === filter ? '' : 'none';
+  });
+}
+
+// ── Step 2 저장 ───────────────────────────────────────────
+async function saveStep2() {
+  try {
+    const res = await fetch('/api/step2/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ results: state2.results, run: currentRun })
+    });
+    const data = await res.json();
+    toast(data.ok ? 'Step 2 저장 완료' : '저장 실패: ' + data.error, data.ok ? 'success' : 'error');
+  } catch (e) {
+    toast('저장 실패: ' + e.message, 'error');
+  }
+}
+
+// ── Step 2 커밋 ───────────────────────────────────────────
+async function doCommit2() {
+  await saveStep2();
+  if (!confirm('Step 2 결과를 git commit & push 하시겠습니까?')) return;
+  try {
+    const res = await fetch('/api/step2/commit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ run: currentRun })
+    });
+    const data = await res.json();
+    toast(data.ok ? '커밋 & 푸시 완료' : '커밋 실패: ' + data.error, data.ok ? 'success' : 'error');
+  } catch (e) {
+    toast('커밋 실패: ' + e.message, 'error');
+  }
+}
+
+// ── 공통 ──────────────────────────────────────────────────
+function openLightbox(src) {
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox').classList.add('show');
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('show');
+}
+
 function toast(msg, type = 'success') {
   const el = document.getElementById('toast');
   el.textContent = msg;
@@ -641,9 +928,12 @@ function toast(msg, type = 'success') {
   setTimeout(() => el.classList.remove('show'), 2800);
 }
 
-// Ctrl+S 단축키
+// Cmd+S
 document.addEventListener('keydown', e => {
-  if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); saveAll(); }
+  if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+    e.preventDefault();
+    if (currentStep === 1) saveAll(); else saveStep2();
+  }
 });
 </script>
 </body>
@@ -661,6 +951,8 @@ function router(req, res) {
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     return res.end(JSON.stringify(getRunDirs()));
   }
+
+  // ── Step 1 라우트 ───────────────────────────────────────
 
   if (req.method === 'GET' && req.url.startsWith('/api/figma-frames')) {
     const runId = new URL(req.url, 'http://x').searchParams.get('run') || '';
@@ -752,13 +1044,77 @@ function router(req, res) {
     return;
   }
 
+  // ── Step 2 라우트 ───────────────────────────────────────
+
+  if (req.method === 'GET' && req.url.startsWith('/api/step2/data')) {
+    const runId = new URL(req.url, 'http://x').searchParams.get('run') || '';
+    const csvText = readStep2File('qa_results.csv', runId);
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    return res.end(JSON.stringify({
+      results:   csvText ? parseCSV(csvText) : { headers: [], rows: [] },
+      extraBugs: readStep2File('extra_bugs.md', runId),
+    }));
+  }
+
+  if (req.method === 'GET' && req.url.startsWith('/step2-shot/')) {
+    const params = new URL(req.url, 'http://x');
+    const filename = decodeURIComponent(params.pathname.replace('/step2-shot/', ''));
+    const runId = params.searchParams.get('run') || '';
+    const filepath = path.join(getStep2Dir(runId), 'screenshots', path.basename(filename));
+    if (!fs.existsSync(filepath)) { res.writeHead(404); return res.end('Not found'); }
+    const ext = path.extname(filepath).toLowerCase();
+    const mime = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
+    res.writeHead(200, { 'Content-Type': mime });
+    return fs.createReadStream(filepath).pipe(res);
+  }
+
+  if (req.method === 'POST' && req.url === '/api/step2/save') {
+    let body = '';
+    req.on('data', d => { body += d; });
+    req.on('end', () => {
+      try {
+        const { results, run } = JSON.parse(body);
+        if (results) writeStep2File('qa_results.csv', serializeCSV(results), run);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  if (req.method === 'POST' && req.url === '/api/step2/commit') {
+    let body = '';
+    req.on('data', d => { body += d; });
+    req.on('end', () => {
+      try {
+        const { run } = body ? JSON.parse(body) : {};
+        const runId = (run && RUN_PATTERN.test(run)) ? run : null;
+        const step2Path = runId ? `output/step2/${runId}/` : 'output/step2/';
+        const commitMsg = runId ? `step2[${runId}]: 검수 후 수정` : 'step2: 검수 후 수정';
+        execSync(`git -C "${BASE}" add ${step2Path}`, { stdio: 'pipe' });
+        execSync(`git -C "${BASE}" commit -m "${commitMsg}"`, { stdio: 'pipe' });
+        execSync(`git -C "${BASE}" push origin main`, { stdio: 'pipe' });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (e) {
+        const msg = e.stderr ? e.stderr.toString() : e.message;
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: msg }));
+      }
+    });
+    return;
+  }
+
   res.writeHead(404);
   res.end('Not found');
 }
 
 http.createServer(router).listen(PORT, () => {
   console.log('\n  ┌─────────────────────────────────┐');
-  console.log('  │   Step 1 검수 UI 실행 중          │');
+  console.log('  │   QA 검수 UI 실행 중              │');
   console.log(`  │   http://localhost:${PORT}          │`);
   console.log('  │   종료: Ctrl+C                    │');
   console.log('  └─────────────────────────────────┘\n');

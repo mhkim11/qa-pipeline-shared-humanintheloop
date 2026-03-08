@@ -1,0 +1,43 @@
+시나리오ID,화면명,URL,전제조건,테스트단계,기대결과,우선순위,피그마일치여부
+SCR-00,로그인,https://staging.ailex.co.kr,비로그인 상태,"1. 이메일 입력: test2026@softplant.co.kr
+2. 비밀번호 입력: softplant1234!
+3. 로그인 버튼 클릭",홈 화면으로 이동,P1,일치
+SCR-01,홈,/home,로그인 상태,"1. 홈 화면 진입
+2. 사건 목록 카드 확인
+3. 최근 활동 내역 확인",사건 목록 및 대시보드 정상 표시,P1,일치
+SCR-02,사건목록,"/case-list?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG&tab=list","로그인 상태, 테스트 사건 존재","1. 사건목록 메뉴 클릭
+2. 목록 탭 확인
+3. 사건 항목 클릭","사건 목록 표시, 항목 클릭 시 상세 진입",P1,일치
+SCR-03,사건목록 > 의뢰인 요청 탭,"/case-list?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG&tab=client_request","로그인 상태, 의뢰인 요청 데이터 존재","1. 의뢰인 요청 탭 클릭
+2. 요청 목록 확인
+3. 요청 항목 상태 확인",의뢰인 요청 목록 정상 표시,P1,일치
+SCR-04,사건목록 > 의뢰인 목록 탭,"/case-list?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG&tab=client_list",로그인 상태,"1. 의뢰인 목록 탭 클릭
+2. 의뢰인 목록 확인",의뢰인 목록 정상 표시,P2,일치
+SCR-05,사건목록 > 편집자 탭,"/case-list?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG&tab=editor",로그인 상태,"1. 편집자 탭 클릭
+2. 편집자 목록 확인",편집자 목록 정상 표시,P2,일치
+SCR-06,서면 작성 에디터,"/case-list/editor?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG","로그인 상태, 편집자 권한","1. 편집자 탭에서 서면 작성 버튼 클릭
+2. 에디터 진입 확인
+3. 텍스트 입력
+4. 저장 버튼 클릭","에디터 정상 로드, 입력 및 저장 동작",P1,일치
+SCR-07,증거목록,/evidence/list,로그인 상태,"1. 증거목록 메뉴 클릭
+2. 파일 목록 확인
+3. 정렬/필터 동작 확인",증거 파일 목록 정상 표시,P1,일치
+SCR-08,증거 PDF 뷰어,/evidence/pdf/cdoc_01KK089FYR0HD07J1580F1VXPD,"로그인 상태, 해당 문서 존재","1. 증거목록에서 PDF 항목 클릭
+2. PDF 뷰어 로드 확인
+3. 페이지 이동 확인","PDF 정상 렌더링, 페이지 이동 동작",P1,일치
+SCR-09,사건 뷰어,/evidence/case-viewer/cdoc_01KK089FYR0HD07J1580F1VXPD,"로그인 상태, 해당 문서 존재","1. 증거목록에서 사건 뷰어 항목 클릭
+2. 뷰어 로드 확인
+3. 사건 정보 표시 확인",사건 뷰어 정상 표시,P1,일치
+SCR-10,AI 분석,/ai,로그인 상태,"1. AI 메뉴 클릭
+2. 분석 대상 선택
+3. 분석 요청 버튼 클릭
+4. 결과 스트리밍 확인","AI 분석 화면 정상 표시, 분석 결과 출력",P2,코드만
+SCR-11,설정,/settings,로그인 상태,"1. 설정 메뉴 클릭
+2. 계정 정보 확인
+3. 알림 설정 확인",설정 화면 정상 표시,P3,일치
+SCR-12,알림,/notifications,로그인 상태,"1. 알림 아이콘 클릭
+2. 알림 목록 확인
+3. 알림 항목 클릭",알림 목록 정상 표시,P3,일치
+SCR-13,메모,/memo,로그인 상태,"1. 메모 메뉴 클릭
+2. 메모 목록 확인
+3. 새 메모 작성",메모 CRUD 정상 동작,P3,일치
