@@ -1,6 +1,5 @@
 시나리오ID,화면명,URL,전제조건,테스트단계,기대결과,우선순위,피그마일치여부
-SCR-01,홈,https://staging.ailex.co.kr/home/update,로그인 상태,1. 홈 화면 접근,최근 사건 목록 및 대시보드 표시,P1,일치
-SCR-02,사건 목록,https://staging.ailex.co.kr/case-list?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG&tab=list,로그인 상태,1. 사건 목록 탭 클릭,사건 목록 표시,P1,일치
+SCR-02,사건 목록,https://staging.ailex.co.kr/case-list?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG&tab=list-revision,로그인 상태,1. 사건 목록 탭 클릭,사건 목록 표시,P1,일치
 SCR-03,사건 의뢰인 요청,https://staging.ailex.co.kr/case-list?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG&tab=client_request,로그인 상태,1. 의뢰인 요청 탭 클릭,의뢰인 요청 목록 표시,P2,일치
 SCR-04,사건 의뢰인 목록,https://staging.ailex.co.kr/case-list?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG&tab=client_list,로그인 상태,1. 의뢰인 목록 탭 클릭,의뢰인 목록 표시,P2,일치
 SCR-05,사건 에디터 목록,https://staging.ailex.co.kr/case-list?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG&tab=editor,로그인 상태,1. 에디터 탭 클릭,에디터 목록 표시,P2,일치
@@ -15,3 +14,4 @@ SCR-13,메모,https://staging.ailex.co.kr/memo,로그인 상태,1. 메모 메뉴
 SCR-14,결제,https://staging.ailex.co.kr/payment,로그인 상태,1. 결제 메뉴 클릭,결제 수단 관리 화면 표시,P3,일치
 SCR-15,구독,https://staging.ailex.co.kr/subscription,로그인 상태,1. 구독 메뉴 클릭,구독 플랜 목록 표시,P3,일치
 wcd-11,,,,,,,
+revision,,,,,,,
