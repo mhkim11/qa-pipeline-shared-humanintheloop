@@ -28,7 +28,7 @@ STAGING_PW  = softplant1234!
 
 ```
 FIGMA_API_TOKEN = 발급받은_토큰
-FIGMA_FILE_KEY  = R1qBV5JwTX051wql9sgJWd
+FIGMA_FILE_KEY  = BD1dtm9YOZJmMOlqm5eaQA
 ```
 
 ---
