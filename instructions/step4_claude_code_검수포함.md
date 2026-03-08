@@ -33,6 +33,7 @@ echo "대상 Run: $RUN_ID"
 ~/qa-pipeline_humanintheloop/output/step1/$RUN_ID/qa_scenarios.csv
 ~/qa-pipeline_humanintheloop/output/step1/$RUN_ID/qa_definition.md
 ~/qa-pipeline_humanintheloop/output/step2/$RUN_ID/qa_results.csv
+~/qa-pipeline_humanintheloop/output/step2/$RUN_ID/extra_bugs.md   ← 있는 경우만
 ~/qa-pipeline_humanintheloop/output/step2/$RUN_ID/screenshots/
 ~/qa-pipeline_humanintheloop/output/step3/$RUN_ID/screenshots/
 ~/qa-pipeline_humanintheloop/output/step3/$RUN_ID/capture_errors.log
