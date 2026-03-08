@@ -1,0 +1,37 @@
+#!/bin/sh
+#
+# .git/hooks/pre-commit
+#
+# 역할:
+#   instructions/ 폴더의 MD 파일이 변경된 경우
+#   자동으로 update_pipeline_doc.js를 실행해서
+#   docs/qa_pipeline_구성도.docx를 재생성하고 커밋에 포함시킵니다.
+#
+# 설치 방법:
+#   cp hooks/pre-commit .git/hooks/pre-commit
+#   chmod +x .git/hooks/pre-commit
+#
+
+# instructions/ 에 변경된 MD 파일이 있는지 확인
+CHANGED=$(git diff --cached --name-only | grep '^instructions/.*\.md$')
+
+if [ -n "$CHANGED" ]; then
+  echo "📄 지시문 변경 감지:"
+  echo "$CHANGED" | sed 's/^/  - /'
+  echo ""
+  echo "🔄 구성도 자동 재생성 중..."
+
+  node scripts/update_pipeline_doc.js
+
+  if [ $? -ne 0 ]; then
+    echo "❌ 구성도 재생성 실패. 커밋을 중단합니다."
+    exit 1
+  fi
+
+  # 재생성된 구성도를 커밋에 자동 포함
+  git add docs/qa_pipeline_구성도.docx
+  echo "✅ 구성도 재생성 완료 → 커밋에 포함됨"
+  echo ""
+fi
+
+exit 0
