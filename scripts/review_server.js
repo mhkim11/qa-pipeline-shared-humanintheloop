@@ -22,9 +22,11 @@ const RUN_PATTERN = /^(\d{10}|sample)$/;
 
 function getRunDirs() {
   if (!fs.existsSync(STEP1_BASE)) return [];
-  return fs.readdirSync(STEP1_BASE)
-    .filter(f => RUN_PATTERN.test(f) && fs.statSync(path.join(STEP1_BASE, f)).isDirectory())
-    .sort().reverse();
+  const entries = fs.readdirSync(STEP1_BASE)
+    .filter(f => RUN_PATTERN.test(f) && fs.statSync(path.join(STEP1_BASE, f)).isDirectory());
+  const numeric = entries.filter(f => /^\d{10}$/.test(f)).sort().reverse();
+  const named   = entries.filter(f => !/^\d{10}$/.test(f)).sort();
+  return [...numeric, ...named];
 }
 
 function getRunDir(runId) {
@@ -547,10 +549,23 @@ function renderMd(id, md, emptyMsg) {
     .replace(/^\&gt; (.+)$/gm, '<blockquote>$1</blockquote>')
     .replace(/\`\`\`[\s\S]*?\`\`\`/g, m => '<pre>' + m.replace(/\`\`\`\\w*/g,'').trim() + '</pre>')
     .replace(/\`([^\`]+)\`/g, '<code>$1</code>')
-    .replace(/^\s*[-*] (.+)$/gm, '<li>$1</li>')
-    .split('\\n')
+    .replace(/^\s*[-*] (.+)$/gm, '<li>$1</li>');
+  // 마크다운 테이블 → HTML 테이블
+  html = html.replace(/((?:[ \t]*\|.+(?:\n|$))+)/g, block => {
+    const rows = block.trim().split('\\n').map(r => r.trim()).filter(Boolean);
+    const dataRows = rows.filter(r => !/^\|[-| :]+\|$/.test(r));
+    if (dataRows.length < 1) return block;
+    const makeRow = (row, isHead) => {
+      const cells = row.split('|').slice(1, -1);
+      const tag = isHead ? 'th' : 'td';
+      return '<tr>' + cells.map(c => \`<\${tag}>\${c.trim()}</\${tag}>\`).join('') + '</tr>';
+    };
+    const [head, ...body] = dataRows;
+    return \`<table><thead>\${makeRow(head, true)}</thead><tbody>\${body.map(r => makeRow(r, false)).join('')}</tbody></table>\`;
+  });
+  html = html.split('\\n')
     .map(line => {
-      if (/^<[hlbp]/.test(line) || line.trim() === '') return line;
+      if (/^<[htbp]/.test(line) || line.trim() === '') return line;
       return \`<p>\${line}</p>\`;
     })
     .join('\\n');
@@ -664,36 +679,22 @@ function enhanceMismatch(frames) {
     });
   });
 
-  // 피그마에만 있는 화면: 해당 이미지 인라인 표시
+  // 피그마에만 있는 화면: <code> 태그 내 파일명과 frames 목록 직접 매칭
+  // 테이블/리스트 형식 모두 대응, 동일 파일 중복 삽입 방지
   if (!frames.length) return;
-  let inFigmaSection = false;
-  el.querySelectorAll('h2, h3, li, p').forEach(node => {
-    const tag = node.tagName.toLowerCase();
-    if ((tag === 'h2' || tag === 'h3') && node.textContent.includes('피그마에만 있는 화면')) {
-      inFigmaSection = true; return;
-    }
-    if ((tag === 'h2' || tag === 'h3') && inFigmaSection) { inFigmaSection = false; return; }
-    if ((tag === 'li' || tag === 'p') && inFigmaSection) {
-      const text = node.textContent;
-      // 1순위: 파일명 직접 명시 ("프레임: 14_payment.png" 형태)
-      const filenameMatch = text.match(/프레임[:\\s]+([\\w가-힣.\\-_]+\\.(?:png|jpg|jpeg|webp))/i)
-        || text.match(/\`([\\w가-힣.\\-_]+\\.(?:png|jpg|jpeg|webp))\`/i);
-      let matched = filenameMatch ? frames.find(f => f === filenameMatch[1]) : null;
-      // 2순위: 키워드 매칭
-      if (!matched) {
-        const keywords = text.toLowerCase().replace(/[^a-z0-9가-힣]/g, ' ').split(/\\s+/).filter(k => k.length > 1);
-        matched = frames.find(f => keywords.some(k => f.toLowerCase().includes(k)));
-      }
-      if (matched) {
-        const img = document.createElement('div');
-        img.className = 'figma-item';
-        img.style.marginTop = '8px';
-        img.innerHTML = \`
-          <div class="figma-item-name">\${matched}</div>
-          <img src="/figma-frame/\${encodeURIComponent(matched)}?run=\${encodeURIComponent(currentRun)}" loading="lazy" onclick="openLightbox(this.src)">\`;
-        node.after(img);
-      }
-    }
+  const frameSet = new Set(frames);
+  const inserted = new Set();
+  el.querySelectorAll('code').forEach(code => {
+    const fname = code.textContent.trim();
+    if (!frameSet.has(fname) || inserted.has(fname)) return;
+    inserted.add(fname);
+    const div = document.createElement('div');
+    div.className = 'figma-item';
+    div.style.cssText = 'margin:6px 0 6px 8px;display:inline-block;vertical-align:top;';
+    div.innerHTML = \`
+      <div class="figma-item-name">\${fname}</div>
+      <img src="/figma-frame/\${encodeURIComponent(fname)}?run=\${encodeURIComponent(currentRun)}" loading="lazy" onclick="openLightbox(this.src)" style="max-height:120px">\`;
+    code.after(div);
   });
 }
 
