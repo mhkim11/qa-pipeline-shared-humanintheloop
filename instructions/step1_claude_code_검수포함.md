@@ -51,7 +51,8 @@ git -C ~/qa-pipeline_humanintheloop pull origin main
 
 5. 기획서 기반으로 화면별 QA 시나리오 생성
    - 로그인 시나리오(SCR-00) 반드시 포함
-   - 동적 경로 전제조건에 스테이징에서 확인한 실제 테스트 데이터 ID 포함
+   - 동적 경로 전제조건에 `pipeline_config.md`의 테스트 데이터 ID 사용
+   - 대응하는 ID가 없는 동적 경로는 플레이스홀더로 대체 (AI 판단 규칙 6번 참고)
 
 6. 결과를 `qa_scenarios.csv`로 저장 — 아래 컬럼 구조 고정
 
@@ -102,7 +103,8 @@ git -C ~/qa-pipeline_humanintheloop pull origin main
    - 기록 형식: 피그마 프레임 파일명(`input/figma_frames/$RUN_ID/` 저장 시 사용한 파일명) 반드시 포함
    - 예시: `온보딩 화면 — 피그마 프레임: 온보딩.png / 코드 없음 → 미구현으로 제외`
 6. 동적 경로 ID 확보 실패 시 → 플레이스홀더(예: SAMPLE_CASE_ID)로 대체 후 `mismatch_report.md` 에 기록
-   - 이 항목은 Step 2 완료 후 자동 업데이트되므로 검수자 확인 불필요
+   - 발생 조건: 코드에서 발견된 동적 경로인데 `pipeline_config.md`의 테스트 데이터 ID에 대응값이 없는 경우
+   - 검수자가 Step 1 검수 UI에서 실제 ID를 직접 입력하여 수정
 7. 동일 URL에 탭으로 구분된 화면 → 탭별로 별도 시나리오로 분리
 8. 우선순위 기준:
    - P1: 핵심 플로우 (로그인, 사건 생성, 서면 작성)
@@ -172,6 +174,7 @@ node ~/qa-pipeline_humanintheloop/scripts/review_server.js
 - 1단계 판단 결과 반영 (행 추가/삭제)
 - SCR-00 (로그인) 포함 여부 확인
 - 우선순위(P1/P2/P3) 조정
+- URL 컬럼에 `SAMPLE_` 로 시작하는 플레이스홀더가 있으면 실제 스테이징 ID로 직접 수정
 
 `정의서` 탭
 - 성공/실패 기준 모호한 표현 수정
