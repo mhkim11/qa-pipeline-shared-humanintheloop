@@ -551,9 +551,9 @@ function renderMd(id, md, emptyMsg) {
     .replace(/\`([^\`]+)\`/g, '<code>$1</code>')
     .replace(/^\s*[-*] (.+)$/gm, '<li>$1</li>');
   // 마크다운 테이블 → HTML 테이블
-  html = html.replace(/((?:[ \t]*\|.+(?:\n|$))+)/g, block => {
+  html = html.replace(/((?:[ \\t]*\\|.+(?:\\n|$))+)/g, block => {
     const rows = block.trim().split('\\n').map(r => r.trim()).filter(Boolean);
-    const dataRows = rows.filter(r => !/^\|[-| :]+\|$/.test(r));
+    const dataRows = rows.filter(r => !/^\\|[-| :]+\\|$/.test(r));
     if (dataRows.length < 1) return block;
     const makeRow = (row, isHead) => {
       const cells = row.split('|').slice(1, -1);
