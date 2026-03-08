@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /Users/mhkim/qa-pipeline_humanintheloop && git diff --name-only | grep -q '^instructions/' && git add instructions/ && git commit -m 'auto: instructions 변경 → 구성도 재생성' && git push origin main 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
+}
