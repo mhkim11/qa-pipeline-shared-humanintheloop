@@ -20,15 +20,21 @@ git -C ~/qa-pipeline_humanintheloop pull origin main
 
 ## 할 일 (순서대로)
 
-0. 실행 로그 기록 (`output/step1/run_log.md` 에 누적 append)
-   - 형식: `## 실행 #{n} — YYYY-MM-DD HH:MM / 입력: {zip파일명}, Figma 키, 샘플문서 {N}개`
+0. 실행 ID 생성 및 디렉토리 준비
+   ```bash
+   RUN_ID=$(date +%y%m%d%H%M)   # 예: 2603081420
+   mkdir -p ~/qa-pipeline_humanintheloop/input/figma_frames/$RUN_ID
+   mkdir -p ~/qa-pipeline_humanintheloop/output/step1/$RUN_ID
+   ```
+   - `output/step1/run_log.md` 에 실행 이력 누적 append
+   - 형식: `## $RUN_ID — {zip파일명}, Figma 키, 샘플문서 {N}개`
 
 1. `~/qa-pipeline_humanintheloop/input/` 의 프론트엔드 코드 zip 압축 해제 후 라우팅 구조 분석
    - 화면 목록, 화면 간 이동 경로, 주요 기능 추출
    - **실패 시 즉시 중단** — 이후 모든 단계가 불가능하므로 오류 메시지 출력 후 종료
 
 2. Figma API로 파일 프레임 목록과 Annotation 추출
-   - 추출한 프레임 이미지는 `~/qa-pipeline_humanintheloop/input/figma_frames/` 에 저장
+   - 추출한 프레임 이미지는 `~/qa-pipeline_humanintheloop/input/figma_frames/$RUN_ID/` 에 저장
    - 이미지 추출 시 요청 사이 **4초 딜레이** 적용 (Pro 플랜 분당 15회 한도 기준)
    - 429 응답 수신 시 → 즉시 중단, `mismatch_report.md` 에 발생 시점과 미추출 프레임 목록 기록 후 코드 단독으로 계속 진행
    - 429가 반복 발생하면 딜레이를 6초 → 8초 순으로 늘려서 재실행
@@ -93,7 +99,7 @@ git -C ~/qa-pipeline_humanintheloop pull origin main
    - 기록 형식: 시나리오ID, 화면 설명 (컴포넌트명·주요 API 엔드포인트·핵심 UI 요소), 판단 근거
    - 예시: `SCR-06 — /case-list/editor: 서면 작성 에디터. CaseEditorPage 컴포넌트, POST /api/documents 호출`
 5. 피그마에는 있는데 코드에 없는 화면 → 미구현 화면으로 분류 + `mismatch_report.md` 기록
-   - 기록 형식: 피그마 프레임 파일명(`input/figma_frames/` 저장 시 사용한 파일명) 반드시 포함
+   - 기록 형식: 피그마 프레임 파일명(`input/figma_frames/$RUN_ID/` 저장 시 사용한 파일명) 반드시 포함
    - 예시: `온보딩 화면 — 피그마 프레임: 온보딩.png / 코드 없음 → 미구현으로 제외`
 6. 동적 경로 ID 확보 실패 시 → 플레이스홀더(예: SAMPLE_CASE_ID)로 대체 후 `mismatch_report.md` 에 기록
    - 이 항목은 Step 2 완료 후 자동 업데이트되므로 검수자 확인 불필요
@@ -108,7 +114,9 @@ git -C ~/qa-pipeline_humanintheloop pull origin main
 ## 저장 위치
 
 ```
-~/qa-pipeline_humanintheloop/output/step1/
+~/qa-pipeline_humanintheloop/input/figma_frames/$RUN_ID/
+~/qa-pipeline_humanintheloop/output/step1/$RUN_ID/
+~/qa-pipeline_humanintheloop/output/step1/run_log.md   ← 전체 실행 이력 공유
 ```
 
 ---
@@ -116,8 +124,8 @@ git -C ~/qa-pipeline_humanintheloop pull origin main
 ## Git 완료
 
 ```bash
-git -C ~/qa-pipeline_humanintheloop add input/figma_frames/ output/step1/
-git -C ~/qa-pipeline_humanintheloop commit -m "step1: 시나리오 및 정의서 생성"
+git -C ~/qa-pipeline_humanintheloop add input/figma_frames/$RUN_ID/ output/step1/$RUN_ID/ output/step1/run_log.md
+git -C ~/qa-pipeline_humanintheloop commit -m "step1[$RUN_ID]: 시나리오 및 정의서 생성"
 git -C ~/qa-pipeline_humanintheloop push origin main
 ```
 

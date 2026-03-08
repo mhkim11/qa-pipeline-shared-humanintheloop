@@ -12,9 +12,31 @@ const { execSync } = require('child_process');
 
 const PORT = 3000;
 const BASE = path.resolve(process.env.HOME, 'qa-pipeline_humanintheloop');
-const STEP1 = path.join(BASE, 'output', 'step1');
-const FIGMA_FRAMES = path.join(BASE, 'input', 'figma_frames');
+const STEP1_BASE = path.join(BASE, 'output', 'step1');
+const FIGMA_BASE = path.join(BASE, 'input', 'figma_frames');
 const IMG_EXTS = new Set(['.png', '.jpg', '.jpeg', '.webp']);
+const RUN_PATTERN = /^\d{10}$/;
+
+function getRunDirs() {
+  if (!fs.existsSync(STEP1_BASE)) return [];
+  return fs.readdirSync(STEP1_BASE)
+    .filter(f => RUN_PATTERN.test(f) && fs.statSync(path.join(STEP1_BASE, f)).isDirectory())
+    .sort().reverse(); // 최신 순
+}
+
+function getRunDir(runId) {
+  if (runId && RUN_PATTERN.test(runId)) return path.join(STEP1_BASE, runId);
+  const runs = getRunDirs();
+  return runs.length ? path.join(STEP1_BASE, runs[0]) : STEP1_BASE;
+}
+
+function getFigmaDir(runId) {
+  if (runId && RUN_PATTERN.test(runId)) {
+    const p = path.join(FIGMA_BASE, runId);
+    if (fs.existsSync(p)) return p;
+  }
+  return FIGMA_BASE;
+}
 
 // ── CSV ──────────────────────────────────────────────────
 
@@ -42,14 +64,15 @@ function serializeCSV({ headers, rows }) {
 
 // ── 파일 I/O ─────────────────────────────────────────────
 
-function readFile(name) {
-  const p = path.join(STEP1, name);
+function readFile(name, runId) {
+  const p = path.join(getRunDir(runId), name);
   return fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : '';
 }
 
-function writeFile(name, content) {
-  fs.mkdirSync(STEP1, { recursive: true });
-  fs.writeFileSync(path.join(STEP1, name), content, 'utf8');
+function writeFile(name, content, runId) {
+  const dir = getRunDir(runId);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, name), content, 'utf8');
 }
 
 // ── HTML ──────────────────────────────────────────────────
@@ -238,6 +261,9 @@ const HTML = `<!DOCTYPE html>
 
 <header>
   <h1>Step 1 검수 <span>/ QA Pipeline</span></h1>
+  <select id="run-select" onchange="loadRun(this.value)" style="padding:5px 8px;border-radius:4px;border:1px solid #444;background:#2a2a40;color:#ccc;font-size:12px;cursor:pointer">
+    <option value="">실행 목록 로딩중...</option>
+  </select>
   <span id="status-text"></span>
   <button class="btn btn-save" onclick="saveAll()">저장</button>
   <button class="btn btn-commit" onclick="doCommit()">저장 &amp; 커밋</button>
@@ -292,32 +318,50 @@ const HTML = `<!DOCTYPE html>
 
 <script>
 let state = { scenarios: { headers: [], rows: [] }, definition: '', spec: '' };
+let currentRun = '';
 
-// ── 초기 로드 ─────────────────────────────────────────
-fetch('/api/data')
+// ── 실행 목록 로드 ────────────────────────────────────
+fetch('/api/runs')
   .then(r => r.json())
-  .then(data => {
-    state.scenarios = data.scenarios || { headers: [], rows: [] };
-    state.definition = data.definition || '';
-    state.spec = data.spec || '';
+  .then(runs => {
+    const sel = document.getElementById('run-select');
+    if (!runs.length) {
+      sel.innerHTML = '<option value="">실행 없음 (Step 1 먼저 실행)</option>';
+      loadRun('');
+      return;
+    }
+    sel.innerHTML = runs.map((r, i) =>
+      \`<option value="\${r}">\${r.replace(/^(\\d{2})(\\d{2})(\\d{2})(\\d{2})(\\d{2})$/, '20$1-$2-$3 $4:$5')}\${i === 0 ? ' (최신)' : ''}</option>\`
+    ).join('');
+    loadRun(runs[0]);
+  });
 
-    renderMd('s-mismatch', data.mismatch,
-      'mismatch_report.md 파일이 없습니다.\\nStep 1 실행 후 다시 확인하세요.');
-    renderMd('s-spec-view', data.spec,
-      'spec_draft.md 파일이 없습니다.\\nStep 1 실행 후 다시 확인하세요.');
-    document.getElementById('s-spec-editor').value = state.spec;
+function loadRun(runId) {
+  currentRun = runId;
+  fetch(\`/api/data?\${runId ? 'run=' + runId : ''}\`)
+    .then(r => r.json())
+    .then(data => {
+      state.scenarios = data.scenarios || { headers: [], rows: [] };
+      state.definition = data.definition || '';
+      state.spec = data.spec || '';
 
-    renderTable();
-    document.getElementById('def-editor').value = state.definition;
-    updateStatus();
+      renderMd('s-mismatch', data.mismatch,
+        'mismatch_report.md 파일이 없습니다.\\nStep 1 실행 후 다시 확인하세요.');
+      renderMd('s-spec-view', data.spec,
+        'spec_draft.md 파일이 없습니다.\\nStep 1 실행 후 다시 확인하세요.');
+      document.getElementById('s-spec-editor').value = state.spec;
 
-    // figma 프레임 목록 로드 후 mismatch 리포트 보강
-    fetch('/api/figma-frames')
-      .then(r => r.json())
-      .then(frames => enhanceMismatch(frames))
-      .catch(() => enhanceMismatch([]));
-  })
-  .catch(() => toast('데이터 로드 실패. 서버가 실행 중인지 확인하세요.', 'error'));
+      renderTable();
+      document.getElementById('def-editor').value = state.definition;
+      updateStatus();
+
+      fetch(\`/api/figma-frames?\${runId ? 'run=' + runId : ''}\`)
+        .then(r => r.json())
+        .then(frames => enhanceMismatch(frames))
+        .catch(() => enhanceMismatch([]));
+    })
+    .catch(() => toast('데이터 로드 실패.', 'error'));
+}
 
 // ── 상태 표시 ─────────────────────────────────────────
 function updateStatus() {
@@ -541,7 +585,7 @@ async function saveAll() {
     const res = await fetch('/api/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ scenarios: state.scenarios, definition: state.definition, spec: state.spec })
+      body: JSON.stringify({ scenarios: state.scenarios, definition: state.definition, spec: state.spec, run: currentRun })
     });
     const data = await res.json();
     toast(data.ok ? '저장 완료' : '저장 실패: ' + data.error, data.ok ? 'success' : 'error');
@@ -555,7 +599,11 @@ async function doCommit() {
   await saveAll();
   if (!confirm('git commit & push 하시겠습니까?\\n\\n메시지: "step1: 검수 후 수정"')) return;
   try {
-    const res = await fetch('/api/commit', { method: 'POST' });
+    const res = await fetch('/api/commit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ run: currentRun })
+    });
     const data = await res.json();
     toast(data.ok ? '커밋 & 푸시 완료' : '커밋 실패: ' + data.error, data.ok ? 'success' : 'error');
   } catch (e) {
@@ -587,10 +635,17 @@ function router(req, res) {
     return res.end(HTML);
   }
 
-  if (req.method === 'GET' && req.url === '/api/figma-frames') {
+  if (req.method === 'GET' && req.url === '/api/runs') {
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    return res.end(JSON.stringify(getRunDirs()));
+  }
+
+  if (req.method === 'GET' && req.url.startsWith('/api/figma-frames')) {
+    const runId = new URL(req.url, 'http://x').searchParams.get('run') || '';
     try {
-      const files = fs.existsSync(FIGMA_FRAMES)
-        ? fs.readdirSync(FIGMA_FRAMES).filter(f => IMG_EXTS.has(path.extname(f).toLowerCase())).sort()
+      const dir = getFigmaDir(runId);
+      const files = fs.existsSync(dir)
+        ? fs.readdirSync(dir).filter(f => IMG_EXTS.has(path.extname(f).toLowerCase())).sort()
         : [];
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
       return res.end(JSON.stringify(files));
@@ -601,8 +656,10 @@ function router(req, res) {
   }
 
   if (req.method === 'GET' && req.url.startsWith('/figma-frame/')) {
-    const filename = decodeURIComponent(req.url.replace('/figma-frame/', ''));
-    const filepath = path.join(FIGMA_FRAMES, path.basename(filename));
+    const params = new URL(req.url, 'http://x');
+    const filename = decodeURIComponent(params.pathname.replace('/figma-frame/', ''));
+    const runId = params.searchParams.get('run') || '';
+    const filepath = path.join(getFigmaDir(runId), path.basename(filename));
     if (!fs.existsSync(filepath)) { res.writeHead(404); return res.end('Not found'); }
     const ext = path.extname(filepath).toLowerCase();
     const mime = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
@@ -610,14 +667,15 @@ function router(req, res) {
     return fs.createReadStream(filepath).pipe(res);
   }
 
-  if (req.method === 'GET' && req.url === '/api/data') {
-    const csvText = readFile('qa_scenarios.csv');
+  if (req.method === 'GET' && req.url.startsWith('/api/data')) {
+    const runId = new URL(req.url, 'http://x').searchParams.get('run') || '';
+    const csvText = readFile('qa_scenarios.csv', runId);
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     return res.end(JSON.stringify({
-      mismatch:   readFile('mismatch_report.md'),
-      spec:       readFile('spec_draft.md'),
+      mismatch:   readFile('mismatch_report.md', runId),
+      spec:       readFile('spec_draft.md', runId),
       scenarios:  csvText ? parseCSV(csvText) : { headers: [], rows: [] },
-      definition: readFile('qa_definition.md'),
+      definition: readFile('qa_definition.md', runId),
     }));
   }
 
@@ -626,10 +684,10 @@ function router(req, res) {
     req.on('data', d => { body += d; });
     req.on('end', () => {
       try {
-        const { scenarios, definition, spec } = JSON.parse(body);
-        if (scenarios) writeFile('qa_scenarios.csv', serializeCSV(scenarios));
-        if (definition !== undefined) writeFile('qa_definition.md', definition);
-        if (spec !== undefined) writeFile('spec_draft.md', spec);
+        const { scenarios, definition, spec, run } = JSON.parse(body);
+        if (scenarios) writeFile('qa_scenarios.csv', serializeCSV(scenarios), run);
+        if (definition !== undefined) writeFile('qa_definition.md', definition, run);
+        if (spec !== undefined) writeFile('spec_draft.md', spec, run);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: true }));
       } catch (e) {
@@ -641,17 +699,28 @@ function router(req, res) {
   }
 
   if (req.method === 'POST' && req.url === '/api/commit') {
-    try {
-      execSync(`git -C "${BASE}" add output/step1/`, { stdio: 'pipe' });
-      execSync(`git -C "${BASE}" commit -m "step1: 검수 후 수정"`, { stdio: 'pipe' });
-      execSync(`git -C "${BASE}" push origin main`, { stdio: 'pipe' });
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ ok: true }));
-    } catch (e) {
-      const msg = e.stderr ? e.stderr.toString() : e.message;
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: msg }));
-    }
+    let body = '';
+    req.on('data', d => { body += d; });
+    req.on('end', () => {
+      try {
+        const { run } = body ? JSON.parse(body) : {};
+        const runId = (run && RUN_PATTERN.test(run)) ? run : null;
+        const step1Path = runId ? `output/step1/${runId}/` : 'output/step1/';
+        const figmaPath = runId ? `input/figma_frames/${runId}/` : null;
+        const commitMsg = runId ? `step1[${runId}]: 검수 후 수정` : 'step1: 검수 후 수정';
+
+        const addTargets = [step1Path, figmaPath].filter(Boolean).join(' ');
+        execSync(`git -C "${BASE}" add ${addTargets}`, { stdio: 'pipe' });
+        execSync(`git -C "${BASE}" commit -m "${commitMsg}"`, { stdio: 'pipe' });
+        execSync(`git -C "${BASE}" push origin main`, { stdio: 'pipe' });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (e) {
+        const msg = e.stderr ? e.stderr.toString() : e.message;
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: msg }));
+      }
+    });
     return;
   }
 
