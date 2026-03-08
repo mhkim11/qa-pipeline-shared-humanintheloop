@@ -86,6 +86,29 @@ echo "대상 Run: $RUN_ID"
 
 ---
 
+## HTML 리포트 생성
+
+`qa_final_report.csv` + `qa_summary.md` + 스크린샷을 하나의 정적 HTML 파일로 묶어 `qa_report.html`로 저장합니다.
+
+### 포함 내용
+
+- 전체 요약 (패스율, 심각도별 건수) — 상단 고정
+- 화면별 결과 테이블 (필터·정렬 가능)
+- 실패/블로킹 행은 빨간 배경으로 강조
+- 스크린샷 인라인 표시 (base64 embed — 외부 파일 참조 없이 HTML 단독으로 동작)
+  - Step 2 실패 스크린샷 + Step 3 전체 캡처 + Figma 원본 3단 비교
+- 개선 권고사항 섹션
+
+### 열기
+
+```bash
+open ~/qa-pipeline_humanintheloop/output/step4/$RUN_ID/qa_report.html
+```
+
+> 서버 실행 불필요. 파일을 더블클릭하거나 위 명령어로 브라우저에서 바로 열립니다.
+
+---
+
 ## Git 완료
 
 ```bash
@@ -117,3 +140,7 @@ git -C ~/qa-pipeline_humanintheloop push origin main
 ### qa_summary.md
 
 전체 요약 + 개선 권고사항 마크다운 문서
+
+### qa_report.html
+
+위 산출물을 종합한 정적 HTML 리포트 — 브라우저에서 바로 열기 가능

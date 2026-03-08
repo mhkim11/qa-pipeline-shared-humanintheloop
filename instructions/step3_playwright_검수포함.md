@@ -91,7 +91,7 @@ git -C ~/qa-pipeline_humanintheloop push origin main
 
 - 화면별 캡처 이미지 16개 (png)
 - `capture_errors.log`
-- `capture.py` (이후 QA 사이클 재사용 가능)
+- `capture.py`
 
 ---
 

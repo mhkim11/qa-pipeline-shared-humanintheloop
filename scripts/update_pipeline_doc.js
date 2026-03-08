@@ -223,7 +223,7 @@ async function main() {
             ["Step 1\n검수 UI", "사람", "시나리오 검수·수정", "output/step1/$RUN_ID/ (위 산출물)", "output/step1/$RUN_ID/ (수정 반영)\noutput/latest_run (RUN_ID 기록)"],
             ["Step 2", "Manus", "QA 실행\n+ 실제 URL·ID 파악", "output/step1/$RUN_ID/\n(latest_run으로 RUN_ID 확인)", "output/step2/$RUN_ID/\n  qa_results.csv\n  screenshots/ (실패)"],
             ["Step 3", "Claude Code\n+ Playwright", "화면 캡처", "output/step2/$RUN_ID/\npipeline_config.md (URL 목록)", "output/step3/$RUN_ID/\n  screenshots/ (전체)\n  capture_errors.log\nscripts/capture.py"],
-            ["Step 4", "Claude Code", "최종 리포트 생성", "output/step1~3/$RUN_ID/ 전체\ninput/figma_frames/$RUN_ID/", "output/step4/$RUN_ID/\n  qa_final_report.csv\n  qa_summary.md"],
+            ["Step 4", "Claude Code", "최종 리포트 생성", "output/step1~3/$RUN_ID/ 전체\ninput/figma_frames/$RUN_ID/", "output/step4/$RUN_ID/\n  qa_final_report.csv\n  qa_summary.md\n  qa_report.html"],
           ],
           [1000, 1600, 2000, 2400, 2026]
         ),
@@ -236,7 +236,7 @@ async function main() {
             ["Step 1\nClaude Code", "피그마(정답 소스)와 코드(구조 파악)를 교차 분석해야 하므로\n코드 읽기·API 호출·파일 생성을 동시에 처리할 수 있는 Claude Code 적합."],
             ["Step 2\nManus", "예상치 못한 화면 전환·팝업·에러 상황을 스스로 판단해야 하므로\n브라우저 조작 특화된 Manus 사용.\n또한 실제 스테이징 탐색으로 동적 경로 ID와 실제 URL 구조 파악 → Step 3 캡처 목록 도출."],
             ["Step 2→3\n연결", "Playwright는 실제 접근 가능한 URL이 필요.\nStep 1 코드 기반 추상 경로만으로는 실제 ID·쿼리파라미터 불가.\nManus가 실제 URL 확인 후 Step 3에 전달."],
-            ["Step 3\nPlaywright", "정해진 화면 안정적 캡처가 목적 → 코드 기반 자동화가 적합.\nscripts/capture.py 저장으로 이후 QA 사이클 재사용 가능."],
+            ["Step 3\nPlaywright", "정해진 화면 안정적 캡처가 목적 → 코드 기반 자동화가 적합.\nscripts/capture.py로 저장."],
             ["Step 4\nClaude Code", "CSV·이미지·로그 이기종 산출물 종합 판단 필요.\n심각도 분류·디자인 비교·반복 패턴 묶기 등 단순 집계 이상의 판단 필요."],
           ],
           [1800, 7226]
@@ -306,7 +306,7 @@ async function main() {
             ["Step 2 Manus", "clone → 작업 → push", "output/step2/$RUN_ID/", "GitHub PAT 필요\nRUN_ID=$(cat output/latest_run)"],
             ["Step 3 Claude Code", "pull → 작업 → push", "output/step3/$RUN_ID/\nscripts/capture.py", "Playwright 로컬 실행\nRUN_ID=$(cat output/latest_run)"],
             ["Step 4 Claude Code", "pull → 작업 → push", "output/step4/$RUN_ID/", "로컬 실행\nRUN_ID=$(cat output/latest_run)"],
-            ["사람 (최종)", "pull", "output/step4/$RUN_ID/ 확인", "Google Sheets 업로드"],
+            ["사람 (최종)", "pull", "output/step4/$RUN_ID/ 확인", "open qa_report.html\n브라우저에서 바로 열기"],
           ],
           [1800, 1800, 2600, 2826]
         ),
