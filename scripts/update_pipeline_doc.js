@@ -203,10 +203,9 @@ async function main() {
           [
             ["서비스명", "Ailex (https://staging.ailex.co.kr)"],
             ["피그마 파일키", "R1qBV5JwTX051wql9sgJWd"],
-            ["GitHub 계정", "mhkim11"],
-            ["QA 저장소 (전자동)", "qa-pipeline-shared"],
-            ["QA 저장소 (검수포함)", "qa-pipeline-shared-humanintheloop"],
-            ["지시문 관리", "instructions/ 폴더 MD 파일 (전자동 / 검수포함 두 버전)"],
+            ["GitHub 저장소", "qa-pipeline-shared-humanintheloop"],
+            ["로컬 폴더", "~/qa-pipeline_humanintheloop"],
+            ["지시문 관리", "instructions/ 폴더 MD 파일"],
             ["실행 ID", "yymmddhhmm 형식 — 실행마다 별도 디렉토리로 누적 관리"],
             ["현재 Run 포인터", "output/latest_run — Step 1 검수 커밋 시 자동 기록"],
             ["구성도 갱신", "node scripts/update_pipeline_doc.js (pre-commit 훅 자동 실행)"],
@@ -254,14 +253,10 @@ async function main() {
           ["파일", "대상 AI", "설명"],
           [
             ["instructions/pipeline_config.md", "전체 공통", "경로·URL·ID 등 공통 설정값 모음\n이 파일만 수정하면 전체 반영"],
-            ["instructions/step1_claude_code_전자동.md", "Claude Code", "Step 1 시나리오 생성 — 전자동"],
-            ["instructions/step1_claude_code_검수포함.md", "Claude Code", "Step 1 시나리오 생성 — 검수포함\n사람 검수 UI + 저장&커밋으로 latest_run 생성"],
-            ["instructions/step2_manus_전자동.md", "Manus", "Step 2 QA 실행 — 전자동"],
-            ["instructions/step2_manus_검수포함.md", "Manus", "Step 2 QA 실행 — 검수포함\noutput/latest_run으로 RUN_ID 확인"],
-            ["instructions/step3_playwright_전자동.md", "Claude Code", "Step 3 화면 캡처 — 전자동"],
-            ["instructions/step3_playwright_검수포함.md", "Claude Code", "Step 3 화면 캡처 — 검수포함\noutput/latest_run으로 RUN_ID 확인"],
-            ["instructions/step4_claude_code_전자동.md", "Claude Code", "Step 4 최종 리포트 — 전자동"],
-            ["instructions/step4_claude_code_검수포함.md", "Claude Code", "Step 4 최종 리포트 — 검수포함\noutput/latest_run으로 RUN_ID 확인"],
+            ["instructions/step1_claude_code_검수포함.md", "Claude Code", "Step 1 시나리오 생성\n사람 검수 UI + 저장&커밋으로 latest_run 생성"],
+            ["instructions/step2_manus_검수포함.md", "Manus", "Step 2 QA 실행\noutput/latest_run으로 RUN_ID 확인"],
+            ["instructions/step3_playwright_검수포함.md", "Claude Code", "Step 3 화면 캡처\noutput/latest_run으로 RUN_ID 확인"],
+            ["instructions/step4_claude_code_검수포함.md", "Claude Code", "Step 4 최종 리포트\noutput/latest_run으로 RUN_ID 확인"],
             ["scripts/review_server.js", "사람", "Step 1 검수 웹 UI (node scripts/review_server.js)\nhttp://localhost:3000 에서 시나리오 검수·수정·커밋"],
             ["scripts/update_pipeline_doc.js", "자동", "instructions/ MD 변경 시 구성도 docx 자동 재생성\npre-commit 훅으로 자동 실행"],
             ["input/sample_docs/", "Step 1", "샘플 PDF — 실제 문서 구조·데이터 패턴 참고용\nStep 1 시나리오 생성 시 자동 반영"],
@@ -271,14 +266,17 @@ async function main() {
         spacer(),
         h2("AI에게 지시하는 방법"),
         infoBox([
-          "# Claude Code — 전자동 Step 1",
-          "instructions/step1_claude_code_전자동.md 파일을 읽고 지시대로 실행해줘.",
+          "# Step 1 — Claude Code",
+          "instructions/step1_claude_code_검수포함.md 파일을 읽고 지시대로 실행해줘.",
           "",
-          "# Manus — 전자동 Step 2",
-          "instructions/step2_manus_전자동.md 파일을 읽고 지시대로 실행해줘.",
+          "# Step 2 — Manus",
+          "instructions/step2_manus_검수포함.md 파일을 읽고 지시대로 실행해줘.",
           "",
-          "# Claude Code — 검수포함 Step 3",
+          "# Step 3 — Claude Code",
           "instructions/step3_playwright_검수포함.md 파일을 읽고 지시대로 실행해줘.",
+          "",
+          "# Step 4 — Claude Code",
+          "instructions/step4_claude_code_검수포함.md 파일을 읽고 지시대로 실행해줘.",
         ]),
         spacer(),
         h2("지시문 변경 시 구성도 업데이트"),
@@ -295,24 +293,8 @@ async function main() {
         spacer(),
         divider(),
 
-        // 4. 운영 방식 비교
-        h1("4. 운영 방식 비교"),
-        makeTable(
-          ["항목", "전자동", "검수포함"],
-          [
-            ["로컬 폴더", "~/qa-pipeline", "~/qa-pipeline_humanintheloop"],
-            ["GitHub 저장소", "qa-pipeline-shared", "qa-pipeline-shared-humanintheloop"],
-            ["Step 1 이후", "바로 Step 2 진행", "사람 검수 후 Step 2 진행"],
-            ["장점", "빠름, 완전 자동화", "시나리오 품질 보장"],
-            ["단점", "오류 전파 가능성", "중간 개입 필요"],
-          ],
-          [2800, 3113, 3113]
-        ),
-        spacer(),
-        divider(),
-
-        // 5. 파일 흐름도
-        h1("5. 파일 흐름도 (GitHub 연동)"),
+        // 4. 파일 흐름도
+        h1("4. 파일 흐름도 (GitHub 연동)"),
         p("Manus는 클라우드 기반 AI라 로컬 파일에 직접 접근 불가. GitHub 저장소를 공유 공간으로 사용.", { color: "666666" }),
         spacer(),
         makeTable(
@@ -331,8 +313,8 @@ async function main() {
         spacer(),
         divider(),
 
-        // 6. 향후 발전 계획
-        h1("6. 향후 발전 계획"),
+        // 5. 향후 발전 계획
+        h1("5. 향후 발전 계획"),
         makeTable(
           ["항목", "현재", "향후", "우선순위"],
           [

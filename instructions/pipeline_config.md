@@ -7,10 +7,10 @@
 
 ## 저장소
 
-| 항목 | 전자동 | 검수포함 |
-|---|---|---|
-| GitHub 저장소 | https://github.com/mhkim11/qa-pipeline-shared | https://github.com/mhkim11/qa-pipeline-shared-humanintheloop |
-| 로컬 폴더 | ~/qa-pipeline | ~/qa-pipeline_humanintheloop |
+| 항목 | 내용 |
+|---|---|
+| GitHub 저장소 | https://github.com/mhkim11/qa-pipeline-shared-humanintheloop |
+| 로컬 폴더 | ~/qa-pipeline_humanintheloop |
 
 ---
 
