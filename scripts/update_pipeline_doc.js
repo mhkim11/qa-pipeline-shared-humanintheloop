@@ -156,10 +156,6 @@ function extractChangelog(md) {
 async function main() {
   // MD 파일 로드
   const config = readMD('pipeline_config.md');
-  const step1md = readMD('step1_claude_code.md');
-  const step2md = readMD('step2_manus.md');
-  const step3md = readMD('step3_playwright.md');
-  const step4md = readMD('step4_claude_code.md');
 
   // 최종 수정일 추출
   const now = new Date().toLocaleDateString('ko-KR');
@@ -210,10 +206,12 @@ async function main() {
             ["GitHub 계정", "mhkim11"],
             ["QA 저장소 (전자동)", "qa-pipeline-shared"],
             ["QA 저장소 (검수포함)", "qa-pipeline-shared-humanintheloop"],
-            ["지시문 관리", "instructions/ 폴더 MD 파일"],
-            ["구성도 갱신", "node scripts/update_pipeline_doc.js"],
+            ["지시문 관리", "instructions/ 폴더 MD 파일 (전자동 / 검수포함 두 버전)"],
+            ["실행 ID", "yymmddhhmm 형식 — 실행마다 별도 디렉토리로 누적 관리"],
+            ["현재 Run 포인터", "output/latest_run — Step 1 검수 커밋 시 자동 기록"],
+            ["구성도 갱신", "node scripts/update_pipeline_doc.js (pre-commit 훅 자동 실행)"],
           ],
-          [3600, 5426]
+          [3000, 6026]
         ),
         spacer(),
 
@@ -222,12 +220,13 @@ async function main() {
         makeTable(
           ["단계", "담당 AI", "주요 역할", "Input", "Output"],
           [
-            ["Step 1", "Claude Code", "시나리오 생성", "프론트엔드 코드 zip\nFigma API", "qa_scenarios.csv\nqa_definition.md"],
-            ["Step 2", "Manus", "QA 실행\n+ 실제 URL·ID 파악", "qa_scenarios.csv\nqa_definition.md", "qa_results.csv\nscreenshots/ (실패)\n캡처 대상 URL 목록"],
-            ["Step 3", "Claude Code\n+ Playwright", "화면 캡처", "Step 2 도출 실제 URL\ncapture.py 스크립트", "screenshots/ (전체)\ncapture_errors.log"],
-            ["Step 4", "Claude Code", "최종 리포트 생성", "Step 1~3 전체 산출물", "qa_final_report.csv\nqa_summary.md"],
+            ["Step 1", "Claude Code", "시나리오 생성", "input/frontend_code/ (zip)\ninput/figma_frames/$RUN_ID/\ninput/sample_docs/ (PDF)", "output/step1/$RUN_ID/\n  qa_scenarios.csv\n  qa_definition.md\n  spec_draft.md\n  mismatch_report.md\noutput/step1/run_log.md"],
+            ["Step 1\n검수 UI", "사람", "시나리오 검수·수정", "output/step1/$RUN_ID/ (위 산출물)", "output/step1/$RUN_ID/ (수정 반영)\noutput/latest_run (RUN_ID 기록)"],
+            ["Step 2", "Manus", "QA 실행\n+ 실제 URL·ID 파악", "output/step1/$RUN_ID/\n(latest_run으로 RUN_ID 확인)", "output/step2/$RUN_ID/\n  qa_results.csv\n  screenshots/ (실패)"],
+            ["Step 3", "Claude Code\n+ Playwright", "화면 캡처", "output/step2/$RUN_ID/\npipeline_config.md (URL 목록)", "output/step3/$RUN_ID/\n  screenshots/ (전체)\n  capture_errors.log\nscripts/capture.py"],
+            ["Step 4", "Claude Code", "최종 리포트 생성", "output/step1~3/$RUN_ID/ 전체\ninput/figma_frames/$RUN_ID/", "output/step4/$RUN_ID/\n  qa_final_report.csv\n  qa_summary.md"],
           ],
-          [1000, 1800, 2400, 2200, 1626]
+          [1000, 1600, 2000, 2400, 2026]
         ),
         spacer(),
 
@@ -256,16 +255,18 @@ async function main() {
           [
             ["instructions/pipeline_config.md", "전체 공통", "경로·URL·ID 등 공통 설정값 모음\n이 파일만 수정하면 전체 반영"],
             ["instructions/step1_claude_code_전자동.md", "Claude Code", "Step 1 시나리오 생성 — 전자동"],
-            ["instructions/step1_claude_code_검수포함.md", "Claude Code", "Step 1 시나리오 생성 — 검수포함\n(사람 검수 단계 포함)"],
+            ["instructions/step1_claude_code_검수포함.md", "Claude Code", "Step 1 시나리오 생성 — 검수포함\n사람 검수 UI + 저장&커밋으로 latest_run 생성"],
             ["instructions/step2_manus_전자동.md", "Manus", "Step 2 QA 실행 — 전자동"],
-            ["instructions/step2_manus_검수포함.md", "Manus", "Step 2 QA 실행 — 검수포함"],
+            ["instructions/step2_manus_검수포함.md", "Manus", "Step 2 QA 실행 — 검수포함\noutput/latest_run으로 RUN_ID 확인"],
             ["instructions/step3_playwright_전자동.md", "Claude Code", "Step 3 화면 캡처 — 전자동"],
-            ["instructions/step3_playwright_검수포함.md", "Claude Code", "Step 3 화면 캡처 — 검수포함"],
+            ["instructions/step3_playwright_검수포함.md", "Claude Code", "Step 3 화면 캡처 — 검수포함\noutput/latest_run으로 RUN_ID 확인"],
             ["instructions/step4_claude_code_전자동.md", "Claude Code", "Step 4 최종 리포트 — 전자동"],
-            ["instructions/step4_claude_code_검수포함.md", "Claude Code", "Step 4 최종 리포트 — 검수포함"],
-            ["scripts/update_pipeline_doc.js", "Claude Code", "MD 변경 시 구성도 docx 자동 재생성"],
+            ["instructions/step4_claude_code_검수포함.md", "Claude Code", "Step 4 최종 리포트 — 검수포함\noutput/latest_run으로 RUN_ID 확인"],
+            ["scripts/review_server.js", "사람", "Step 1 검수 웹 UI (node scripts/review_server.js)\nhttp://localhost:3000 에서 시나리오 검수·수정·커밋"],
+            ["scripts/update_pipeline_doc.js", "자동", "instructions/ MD 변경 시 구성도 docx 자동 재생성\npre-commit 훅으로 자동 실행"],
+            ["input/sample_docs/", "Step 1", "샘플 PDF — 실제 문서 구조·데이터 패턴 참고용\nStep 1 시나리오 생성 시 자동 반영"],
           ],
-          [3200, 1800, 4026]
+          [3200, 1600, 4226]
         ),
         spacer(),
         h2("AI에게 지시하는 방법"),
@@ -317,14 +318,15 @@ async function main() {
         makeTable(
           ["주체", "Git 액션", "대상 경로", "비고"],
           [
-            ["사람 (초기)", "push", "input/frontend_code.zip\ninstructions/ (MD 파일)", "1회 설정"],
-            ["Step 1 Claude Code", "pull → 작업 → push", "input/figma_frames/\noutput/step1/", "로컬 실행"],
-            ["Step 2 Manus", "clone → 작업 → push", "output/step2/", "GitHub PAT 필요"],
-            ["Step 3 Claude Code", "pull → 작업 → push", "output/step3/\nscripts/capture.py", "Playwright 로컬 실행"],
-            ["Step 4 Claude Code", "pull → 작업 → push", "output/step4/", "로컬 실행"],
-            ["사람 (최종)", "pull", "output/step4/ 확인", "Google Sheets 업로드"],
+            ["사람 (초기)", "push", "input/frontend_code/ (zip)\ninput/sample_docs/ (PDF)\ninstructions/ (MD 파일)", "1회 설정\n또는 새 프로젝트 시"],
+            ["Step 1 Claude Code", "pull → 작업 → push", "input/figma_frames/$RUN_ID/\noutput/step1/$RUN_ID/\noutput/step1/run_log.md", "로컬 실행\nRUN_ID=$(date +%y%m%d%H%M)"],
+            ["사람 (검수)", "검수 UI → 저장&커밋", "output/step1/$RUN_ID/ (수정)\noutput/latest_run", "node scripts/review_server.js\nhttp://localhost:3000"],
+            ["Step 2 Manus", "clone → 작업 → push", "output/step2/$RUN_ID/", "GitHub PAT 필요\nRUN_ID=$(cat output/latest_run)"],
+            ["Step 3 Claude Code", "pull → 작업 → push", "output/step3/$RUN_ID/\nscripts/capture.py", "Playwright 로컬 실행\nRUN_ID=$(cat output/latest_run)"],
+            ["Step 4 Claude Code", "pull → 작업 → push", "output/step4/$RUN_ID/", "로컬 실행\nRUN_ID=$(cat output/latest_run)"],
+            ["사람 (최종)", "pull", "output/step4/$RUN_ID/ 확인", "Google Sheets 업로드"],
           ],
-          [2000, 2000, 2800, 2226]
+          [1800, 1800, 2600, 2826]
         ),
         spacer(),
         divider(),
