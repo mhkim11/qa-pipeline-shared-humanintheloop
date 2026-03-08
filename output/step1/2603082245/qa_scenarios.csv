@@ -1,0 +1,80 @@
+시나리오ID,화면명,URL,전제조건,테스트단계,기대결과,우선순위,피그마일치여부
+SCR-00,로그인,https://staging.ailex.co.kr,로그아웃 상태,"1. https://staging.ailex.co.kr 접속
+2. 이메일 입력: test2026@softplant.co.kr
+3. 비밀번호 입력: softplant1234!
+4. 로그인 버튼 클릭",홈 화면(/)으로 리다이렉트되고 EvidenceListTable이 표시된다,P1,코드만
+SCR-01,홈 (사건목록),https://staging.ailex.co.kr/,로그인 상태,"1. 로그인 후 홈(/) 접속
+2. 사건 목록 확인
+3. 좌측 내비게이션 메뉴 확인
+4. 새 사건 등록 버튼 클릭","사건 목록이 표시되고, 새 사건 등록 모달이 열린다. 민사/형사 구분 선택이 가능하다",P1,일치
+SCR-02,사건 목록 — 기록 목록,https://staging.ailex.co.kr/case-list?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG&tab=list,"로그인 상태, CIVIL_CASE_ID/PROJECT_ID 존재","1. 홈에서 민사 사건 클릭
+2. tab=list 파라미터로 /case-list 진입
+3. 기록 목록 탭 확인
+4. 문서 항목 클릭","사건 기록 목록이 표시되고, 문서 클릭 시 CaseDetailListTable이 열린다",P1,일치
+SCR-03,사건 목록 — 자료 요청,https://staging.ailex.co.kr/case-list?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG&tab=client_request,"로그인 상태, 사건 선택된 상태","1. 사건 화면에서 좌측 '의뢰인 자료' 메뉴 클릭
+2. '자료 요청' 서브 탭 클릭
+3. 요청 목록 확인
+4. 새 요청 생성 시도","자료 요청 목록이 표시되고 의뢰인에게 링크를 전송할 수 있다",P1,일치
+SCR-04,사건 목록 — 전체 자료,https://staging.ailex.co.kr/case-list?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG&tab=client_list,"로그인 상태, 의뢰인 제출 자료 1건 이상 존재","1. 사건 화면에서 '전체 자료' 서브 탭 클릭
+2. 제출된 자료 목록 확인
+3. 문서 항목 클릭","의뢰인이 제출한 전체 자료 목록이 표시되고 문서를 열 수 있다",P2,일치
+SCR-05,사건 목록 — 서면 작성 탭,https://staging.ailex.co.kr/case-list?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG&tab=editor,"로그인 상태, 사건 선택된 상태","1. 사건 화면에서 좌측 '서면 작성' 메뉴 클릭
+2. tab=editor로 전환 확인
+3. 서면 목록 확인
+4. 서면 작성/편집 버튼 클릭","서면 목록(CaseDocumentEditorWrapper)이 표시되고 서면 에디터로 이동할 수 있다",P1,일치
+SCR-06,서면 작성 에디터,https://staging.ailex.co.kr/case-list/editor?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG,"로그인 상태, 서면 선택 후 에디터 진입","1. 서면 작성 탭에서 특정 서면 에디터 열기
+2. 텍스트 입력 테스트
+3. AI 서면 생성 기능 확인
+4. 뒤로가기 버튼으로 탭으로 복귀","에디터가 전체화면으로 표시되고 AI 서면 생성, 저장, 뒤로가기가 정상 동작한다",P1,일치
+SCR-07,증거 목록,https://staging.ailex.co.kr/evidence/list,로그인 상태,"1. 좌측 메뉴 또는 홈에서 /evidence/list 접속
+2. 증거 목록 표시 확인
+3. 검색 기능 사용
+4. 문서 항목 클릭","증거 문서 목록이 표시되고 검색/필터가 동작하며 문서를 선택할 수 있다",P1,일치
+SCR-08,증거 PDF 뷰어,https://staging.ailex.co.kr/evidence/pdf/cdoc_01KK089FYR0HD07J1580F1VXPD,"로그인 상태, DOCUMENT_ID 존재","1. 증거 목록에서 PDF 문서 클릭
+2. /evidence/pdf/{DOCUMENT_ID} 접속
+3. PDF 로딩 확인
+4. 간편검색 버튼 클릭
+5. 텍스트 모달에서 Ctrl+F 검색","PDF가 iframe으로 표시되고, 간편검색 모달이 열려 OCR 텍스트를 검색할 수 있다",P1,일치
+SCR-09,증거 케이스 뷰어,https://staging.ailex.co.kr/evidence/case-viewer/cdoc_01KK089FYR0HD07J1580F1VXPD,"로그인 상태, DOCUMENT_ID 존재","1. 증거 목록에서 케이스 뷰어 진입
+2. /evidence/case-viewer/{DOCUMENT_ID} 접속
+3. 뷰어 로딩 확인
+4. 문서 탐색","케이스 뷰어가 정상 로딩되고 문서를 탐색할 수 있다",P2,일치
+SCR-10,AI 분석,https://staging.ailex.co.kr/ai,로그인 상태,"1. 좌측 메뉴 또는 홈에서 /ai 접속
+2. project_id 파라미터 확인
+3. 카테고리 목록 로딩 확인
+4. 메뉴 항목 클릭
+5. 콘텐츠 영역에서 결과 확인","AI 분석 카테고리와 메뉴가 표시되고, 클릭 시 HTML/MD 리포트가 우측 영역에 렌더링된다",P1,일치
+SCR-11,설정,https://staging.ailex.co.kr/settings,로그인 상태,"1. 좌측 사이드바 또는 사건 화면 설정 아이콘 클릭
+2. /settings 접속
+3. 계정 정보 확인
+4. 설정값 변경 시도","설정 화면이 표시되고 계정/사무소 정보를 조회·수정할 수 있다",P2,코드만
+SCR-12,알림,https://staging.ailex.co.kr/notifications,로그인 상태,"1. 알림 아이콘 또는 메뉴 클릭
+2. /notifications 접속
+3. 알림 목록 확인
+4. 알림 항목 클릭","알림 목록이 표시되고 미읽음/읽음 상태를 확인할 수 있다",P3,코드만
+SCR-13,메모,https://staging.ailex.co.kr/memo,로그인 상태,"1. 메뉴에서 /memo 접속
+2. 화면 표시 확인","메모 관리 화면이 표시된다 (현재 미구현 — 빈 컴포넌트 반환)",P3,코드만
+SCR-14,결제 관리,https://staging.ailex.co.kr/payment,로그인 상태,"1. /payment 접속
+2. 결제 수단 목록 확인
+3. 결제 수단 추가 시도","결제 관리 화면이 표시되고 결제 수단을 관리할 수 있다",P2,코드만
+SCR-15,구독 관리,https://staging.ailex.co.kr/subscription,로그인 상태,"1. /subscription 접속
+2. 현재 구독 플랜 확인
+3. 플랜 변경 시도","구독 관리 화면이 표시되고 플랜 정보를 확인·변경할 수 있다",P2,코드만
+SCR-16,회원가입,https://staging.ailex.co.kr/register,로그아웃 상태,"1. 로그인 화면에서 회원가입 링크 클릭
+2. /register 접속
+3. 이메일 입력
+4. 인증 코드 전송 및 입력","회원가입 화면이 표시되고 이메일 인증 후 다음 단계로 진행된다",P2,코드만
+SCR-17,아이디 찾기,https://staging.ailex.co.kr/find_id,로그아웃 상태,"1. 로그인 화면에서 아이디 찾기 클릭
+2. /find_id 접속
+3. 본인인증 정보 입력
+4. /id_certify → /show_id 이동","아이디 찾기 플로우가 정상 동작하고 아이디를 확인할 수 있다",P3,코드만
+SCR-18,증거 제출 요청 (외부),https://staging.ailex.co.kr/evidence-request,로그아웃 상태 (외부 의뢰인),"1. 의뢰인이 증거 제출 링크 접속
+2. /evidence-request 화면 확인
+3. 파일 선택 및 업로드
+4. 제출 완료","외부 의뢰인이 비로그인 상태에서 파일을 업로드하고 제출할 수 있다",P1,일치
+SCR-19,사건 목록 — 권한관리,https://staging.ailex.co.kr/case-list?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG&tab=authority,"로그인 상태, 사건 선택된 상태, 권한관리 권한 보유","1. 사건 화면에서 권한관리 탭 진입
+2. 참여자 목록 확인
+3. 권한 변경 시도","사건 참여자 목록이 표시되고 역할/권한을 변경할 수 있다",P2,코드만
+SCR-20,증거 요약 PDF,https://staging.ailex.co.kr/evidence/summaryPdf/cdoc_01KK089FYR0HD07J1580F1VXPD,"로그인 상태, DOCUMENT_ID 존재, 요약 처리 완료","1. 증거 목록에서 요약 PDF 보기 선택
+2. /evidence/summaryPdf/{DOCUMENT_ID} 접속
+3. 요약 PDF 로딩 확인","AI가 생성한 요약 PDF가 정상 표시된다",P2,코드만
