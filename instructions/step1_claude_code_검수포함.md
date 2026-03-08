@@ -34,6 +34,7 @@ git -C ~/qa-pipeline_humanintheloop pull origin main
    - **실패 시 즉시 중단** — 이후 모든 단계가 불가능하므로 오류 메시지 출력 후 종료
 
 2. Figma API로 파일 프레임 목록과 Annotation 추출
+   - `pipeline_config.md`의 `FIGMA_FILE_KEY`로 파일 조회 → **`v2.3 하이라이팅` 페이지**의 최상위 FRAME 노드를 **전부** 가져옴 (선택하지 말 것 — 모든 FRAME 대상)
    - 추출한 프레임 이미지는 `~/qa-pipeline_humanintheloop/input/figma_frames/$RUN_ID/` 에 저장
    - 이미지 추출 시 요청 사이 **4초 딜레이** 적용 (Pro 플랜 분당 15회 한도 기준)
    - 429 응답 수신 시 → 즉시 중단, `mismatch_report.md` 에 발생 시점과 미추출 프레임 목록 기록 후 코드 단독으로 계속 진행
