@@ -657,21 +657,6 @@ function showSTab(idx, el) {
 function enhanceMismatch(frames) {
   const el = document.getElementById('s-mismatch');
 
-  // 동적 경로 ID 미확보 섹션: 노란 배경 + 직접 수정 안내 (자동 업데이트 배지 제거)
-  let inDynamicSection = false;
-  el.querySelectorAll('h2, h3, li, p').forEach(node => {
-    const tag = node.tagName.toLowerCase();
-    if ((tag === 'h2' || tag === 'h3') && node.textContent.includes('동적 경로 ID')) {
-      inDynamicSection = true;
-      node.style.cssText += 'background:#fffbe6;padding:4px 8px;border-left:3px solid #f0c040;';
-      return;
-    }
-    if ((tag === 'h2' || tag === 'h3') && inDynamicSection) { inDynamicSection = false; return; }
-    if ((tag === 'li' || tag === 'p') && inDynamicSection) {
-      node.style.cssText += 'background:#fffbe6;padding:3px 8px;border-radius:3px;';
-    }
-  });
-
   // SCR-XX → 강조 + 시나리오 삭제 버튼
   el.querySelectorAll('li, p').forEach(node => {
     node.innerHTML = node.innerHTML.replace(/\\b(SCR-\\d+)\\b/g, (match) => {
