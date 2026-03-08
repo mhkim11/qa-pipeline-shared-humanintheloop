@@ -56,8 +56,11 @@ qa-pipeline/output/step1/$RUN_ID/qa_definition.md
    - `qa_definition.md`의 판단 기준으로 성공/실패 결정
    - 실패 시 스크린샷 캡처 + 재현 경로 기록
 4. 시나리오에 없는 버그 발견 시 별도 기록
-5. QA 완료 후 실제 확인된 URL 구조와 동적 ID를 Step 3 캡처 대상 목록으로 정리
-   - 추상 경로(/case/:id)가 아닌 실제 접근 가능한 전체 URL 기준
+5. QA 완료 후 실제 확인된 URL과 동적 ID로 `pipeline_config.md` 업데이트
+   - **캡처 대상 화면 목록**: 추상 경로가 아닌 실제 접근 가능한 전체 URL로 교체
+   - **테스트 데이터 ID**: `qa_scenarios.csv`에 `SAMPLE_`로 시작하는 플레이스홀더가 있으면 실제 확인된 ID로 추가
+     - 예: `SAMPLE_ANNOTATION_ID` 발견 → 스테이징에서 실제 ID 확인 후 `ANNOTATION_ID = actual_id_value` 추가
+   - 업데이트 후 커밋 (아래 Git 완료 참고)
 
 ---
 
@@ -83,8 +86,8 @@ qa-pipeline/output/step2/$RUN_ID/screenshots/
 ## Git 완료
 
 ```bash
-git add output/step2/$RUN_ID/
-git commit -m "step2[$RUN_ID]: Manus QA 실행 결과"
+git add output/step2/$RUN_ID/ instructions/pipeline_config.md
+git commit -m "step2[$RUN_ID]: Manus QA 실행 결과 + pipeline_config 업데이트"
 git push origin main
 ```
 

@@ -255,6 +255,16 @@ const HTML = `<!DOCTYPE html>
     font-size: 10px; padding: 2px 7px; border-radius: 3px;
     font-weight: 500; margin-left: 6px; vertical-align: middle;
   }
+
+  /* 플레이스홀더 경고 */
+  .placeholder-banner {
+    margin: 8px 20px 0; padding: 8px 14px;
+    background: #fffbe6; border: 1px solid #ffe58f; border-radius: 5px;
+    font-size: 12px; color: #875300; display: flex; align-items: center; gap: 8px;
+  }
+  .placeholder-banner strong { font-weight: 600; }
+  td.has-placeholder { background: #fffbe6 !important; }
+  td.has-placeholder:focus { background: #fff7cc !important; }
 </style>
 </head>
 <body>
@@ -297,7 +307,8 @@ const HTML = `<!DOCTYPE html>
     </div>
 
     <div class="panel active" id="panel-scenarios">
-      <div class="table-container" id="table-container">
+      <div class="placeholder-banner" id="placeholder-banner" style="display:none"></div>
+      <div class="table-container" id="table-container" style="margin-top:8px">
         <div class="loading">불러오는 중...</div>
       </div>
     </div>
@@ -409,6 +420,16 @@ function renderTable() {
     return;
   }
 
+  // 플레이스홀더 감지
+  const placeholderRows = rows.filter(r => r.some(c => String(c).includes('SAMPLE_')));
+  const bannerEl = document.getElementById('placeholder-banner');
+  if (placeholderRows.length > 0) {
+    bannerEl.style.display = 'flex';
+    bannerEl.innerHTML = \`⚠️ <strong>플레이스홀더 \${placeholderRows.length}건</strong> — SAMPLE_로 시작하는 ID를 실제 스테이징 ID로 수정하세요.\`;
+  } else {
+    bannerEl.style.display = 'none';
+  }
+
   // 컬럼 인덱스
   const priIdx = headers.findIndex(h => h.includes('우선순위'));
   const mismatchIdx = headers.findIndex(h => h.includes('피그마일치여부'));
@@ -426,7 +447,8 @@ function renderTable() {
       if (ci === mismatchIdx && needsJudgment) {
         display = \`<span style="color:#c0392b;font-weight:600">\${escHtml(cell)}</span>\`;
       }
-      return \`<td contenteditable="true" data-row="\${ri}" data-col="\${ci}" onblur="updateCell(this)" onfocus="this.innerHTML=escHtml(state.scenarios.rows[\${ri}][\${ci}])">\${display}</td>\`;
+      const hasPlaceholder = String(cell).includes('SAMPLE_');
+      return \`<td contenteditable="true" data-row="\${ri}" data-col="\${ci}" onblur="updateCell(this)" onfocus="this.innerHTML=escHtml(state.scenarios.rows[\${ri}][\${ci}])" \${hasPlaceholder ? 'class="has-placeholder" title="SAMPLE_ 플레이스홀더 — 실제 ID로 수정 필요"' : ''}>\${display}</td>\`;
     }).join('');
     return \`<tr\${rowStyle}>\${cells}<td><button class="btn-sm btn-del" onclick="delRow(\${ri})">삭제</button></td></tr>\`;
   }).join('');
