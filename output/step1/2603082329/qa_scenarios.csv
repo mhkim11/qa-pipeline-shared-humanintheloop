@@ -1,0 +1,133 @@
+시나리오ID,화면명,URL,전제조건,테스트단계,기대결과,우선순위,피그마일치여부
+SCR-00,로그인,/,비로그인 상태,"1. https://staging.ailex.co.kr 접속
+2. 이메일 입력: test2026@softplant.co.kr
+3. 비밀번호 입력: softplant1234!
+4. 로그인 버튼 클릭","홈 화면(/)으로 이동, 토큰 발급 및 세션 유지",P1,코드만
+SCR-01,로그인 — 이메일 형식 오류,/,비로그인 상태,"1. 이메일 필드에 'notanemail' 입력
+2. 비밀번호 필드 클릭 또는 포커스 이동","이메일 형식 오류 메시지 표시(zod 검증), 로그인 버튼 비활성화",P1,코드만
+SCR-02,로그인 — 비밀번호 누락,/,비로그인 상태,"1. 이메일 입력: test2026@softplant.co.kr
+2. 비밀번호 미입력
+3. 로그인 버튼 클릭 시도","비밀번호 필수 입력 오류 메시지, 로그인 버튼 비활성화",P1,코드만
+SCR-03,로그인 — 존재하지 않는 계정,/,비로그인 상태,"1. 이메일 입력: notexist@example.com
+2. 비밀번호 필드 포커스","이메일 존재 여부 체크 API 호출, 계정 없음 메시지 표시",P2,코드만
+SCR-04,로그인 — 아이디 저장,/,비로그인 상태,"1. 이메일 입력
+2. '아이디 저장' 체크박스 선택
+3. 로그인 후 로그아웃
+4. 로그인 페이지 재접속","이메일 필드에 저장된 이메일 자동 입력",P2,코드만
+SCR-05,이용약관 페이지,/terms,비로그인 상태,"1. /terms 접속","이용약관 내용 표시",P3,코드만
+SCR-06,회원가입 — 약관동의,/register,비로그인 상태,"1. /register 접속
+2. 서비스 이용약관 체크
+3. 개인정보처리방침 체크
+4. 전체 동의 클릭 후 다음 버튼","약관 동의 완료, 본인인증 단계로 이동(NICE 팝업 실행)",P2,코드만
+SCR-07,회원가입 — 필수 약관 미동의,/register,비로그인 상태,"1. /register 접속
+2. 서비스 이용약관만 미체크 상태로 다음 버튼 클릭","필수 약관 미동의 오류 메시지, 다음 단계 진행 불가",P2,코드만
+SCR-08,아이디 찾기,/find_id,비로그인 상태,"1. 로그인 화면에서 '아이디 찾기' 클릭
+2. /find_id 접속 확인","아이디 찾기 페이지 표시",P2,코드만
+SCR-09,비밀번호 재설정 탭,/find_id?tab=pw,비로그인 상태,"1. /find_id 접속
+2. 비밀번호 재설정 탭 클릭","비밀번호 재설정 폼으로 탭 전환",P2,코드만
+SCR-10,비밀번호 재설정 페이지,/reset_password,비로그인 상태(인증 완료 상태),"1. 본인인증 후 /reset_password 접속
+2. 새 비밀번호 입력
+3. 비밀번호 확인 입력
+4. 변경 버튼 클릭","비밀번호 변경 완료 메시지, 로그인 페이지로 이동",P2,코드만
+SCR-11,개인정보처리방침,/policy,비로그인 상태,"1. /policy 접속","개인정보처리방침 내용 표시",P3,코드만
+SCR-12,의뢰인 자료 제출 — 정상 업로드,/evidence-request,비로그인 상태 (의뢰인),"1. /evidence-request 접속
+2. PDF 파일(10MB 이하) 선택
+3. 제출 버튼 클릭","파일 업로드 성공, 제출 완료 메시지 표시",P1,일치
+SCR-13,의뢰인 자료 제출 — 형식 오류,/evidence-request,비로그인 상태 (의뢰인),"1. /evidence-request 접속
+2. .hwp 파일 선택 시도","'한글(HWP/HWPX) 파일 업로드를 지원하지 않습니다.' 토스트 메시지 표시, 업로드 차단",P1,일치
+SCR-14,의뢰인 자료 제출 — 용량 초과,/evidence-request,비로그인 상태 (의뢰인),"1. /evidence-request 접속
+2. 500MB 초과 파일 선택","'{파일명}은(는) 크기 제한(500MB)을 초과합니다.' 토스트 메시지, 해당 파일 업로드 차단",P1,일치
+SCR-15,의뢰인 자료 제출 — 기타자료 제출 모달,/evidence-request,비로그인 상태 (의뢰인),"1. /evidence-request 접속
+2. '기타자료 제출하기' 버튼 클릭","기타자료 제출 모달 열림, 파일 첨부 폼 표시",P2,일치
+SCR-16,홈 화면 — 증거 목록 탭,/,로그인 상태 (일반 사용자),"1. 로그인 후 / 접속
+2. 기본 탭 확인","EvidenceTable 렌더링, 증거 문서 목록 표시",P1,코드만
+SCR-17,홈 화면 — 히스토리 탭,/,로그인 상태,"1. 홈 화면 헤더에서 히스토리 아이콘/버튼 클릭","HistoryTable 렌더링, 히스토리 목록 표시",P2,코드만
+SCR-18,홈 화면 — 권한관리 탭,/?active=authority,로그인 상태,"1. 홈 화면 헤더에서 권한관리 클릭 또는 URL에 ?active=authority 추가","AuthorityTable 렌더링",P2,코드만
+SCR-19,홈 화면 — AI 탭,/,로그인 상태,"1. 홈 화면 헤더에서 AI 버튼 클릭","AIPage 렌더링, AI 분석 메뉴 로딩",P2,코드만
+SCR-20,홈 화면 — 결제 탭,/?active=payment,로그인 상태,"1. URL에 ?active=payment 추가 또는 결제 메뉴 클릭","PaymentTable 렌더링",P2,코드만
+SCR-21,홈 화면 — 구독 탭,/?active=subscription,로그인 상태,"1. URL에 ?active=subscription 추가","SubscriptionTable 렌더링",P2,코드만
+SCR-22,민사 사건 — 기록 목록 탭,/case-list?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG&tab=list,로그인 상태; CIVIL_CASE_ID 데이터 존재,"1. 로그인 후 해당 URL 접속
+2. 기록 목록 탭 확인","CaseMainListTable 렌더링, 사건 문서 목록 표시",P1,일치
+SCR-23,민사 사건 — 기록 목록 검색,/case-list?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG&tab=list,로그인 상태; 문서 목록 존재,"1. 검색 필드에 검색어 입력
+2. 검색 결과 확인","검색어 기반 문서 목록 필터링, 검색 결과 표시",P1,일치
+SCR-24,민사 사건 — 자료 요청 탭,/case-list?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG&tab=client_request,로그인 상태; civil_case_id 존재,"1. 사이드바에서 '의뢰인 자료 > 자료 요청' 클릭 또는 URL 직접 접속","CaseRequestListTable 렌더링, 자료 요청 목록 표시",P1,일치
+SCR-25,민사 사건 — 자료 요청 탭 (sideBar 없이 진입),/case-list?tab=client_request,로그인 상태; civil_case_id 미선택,"1. civil_case_id 없이 tab=client_request URL 접속","사건 미선택 상태로 빈 목록 또는 사건 선택 안내 표시",P2,일치
+SCR-26,민사 사건 — 전체 자료 탭,/case-list?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG&tab=client_list,로그인 상태; civil_case_id 존재,"1. 사이드바에서 '의뢰인 자료 > 전체 자료' 클릭","CaseRequestDocumentListTable 렌더링, 전체 자료 목록 표시",P1,일치
+SCR-27,민사 사건 — 서면 작성 탭,/case-list?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG&tab=editor,로그인 상태,"1. 사이드바에서 '서면 작성' 클릭","CaseDocumentEditorWrapper 렌더링, 서면 목록 표시",P1,일치
+SCR-28,민사 사건 — 권한관리 탭,/case-list?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG,로그인 상태,"1. 사이드바 하단 사용자 아이콘 클릭","CaseAuthorityTable 렌더링, 권한 관리 화면 표시",P2,코드만
+SCR-29,서면 생성 — 서면 생성하기 폼,/case-list/editor?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG,로그인 상태; 서면 작성 탭 진입,"1. '서면 생성하기' 버튼 클릭
+2. 서면 제목 입력
+3. 생성 버튼 클릭","새 서면 생성, 에디터 화면으로 이동",P1,일치
+SCR-30,서면 생성 — 제목 누락,/case-list/editor?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG,로그인 상태,"1. 서면 생성 폼에서 제목 미입력
+2. 생성 버튼 클릭","제목 필수 입력 오류 메시지, 생성 차단",P1,일치
+SCR-31,서면 생성 — 서버 오류,/case-list/editor?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG,로그인 상태; 서버 오류 상태 모의,"1. 서면 생성 요청 시 서버 500 응답","오류 메시지 표시, 에디터 진입 차단",P2,코드만
+SCR-32,서면 작성 에디터 — 정상 진입,/case-list/editor?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG,로그인 상태; 서면 생성 완료,"1. 서면 클릭 또는 서면 생성 후 에디터 진입
+2. TinyMCE 에디터 로딩 확인","에디터 렌더링 완료, 서면 내용 표시",P1,일치
+SCR-33,서면 작성 — 검토 요청 모달,/case-list/editor?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG,로그인 상태; 서면 작성 중,"1. '검토 요청' 버튼 클릭 (모달 열기)
+2. 메시지 입력
+3. 요청 보내기 클릭 (확인)
+4. 취소 버튼 클릭 (닫기)","모달 열림 → 검토 요청 전송 → 버전 기록 생성 / 취소 시 모달 닫힘",P1,일치
+SCR-34,서면 작성 — 증거 첨부,/case-list/editor?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG,로그인 상태; 서면 작성 중,"1. 증거 첨부 패널 열기
+2. 기록 목록에서 문서 드래그앤드롭 또는 클릭으로 첨부","문서가 서면에 첨부됨, 증명 방법 명세에 반영",P1,일치
+SCR-35,서면 작성 — 이름 바꾸기 모달,/case-list/editor?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG,로그인 상태; 서면 목록에 서면 존재,"1. 서면 우클릭 또는 더보기 메뉴 클릭
+2. '이름 바꾸기' 선택 (모달 열기)
+3. 새 이름 입력
+4. 확인 버튼 클릭","모달 열림 → 이름 변경 완료 → 목록에서 새 이름 반영",P2,일치
+SCR-36,서면 작성 — 다운로드 모달,/case-list/editor?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG,로그인 상태; 서면 '작성중' 상태,"1. 서면 더보기 메뉴 클릭
+2. '다운로드' 선택 (모달 열기)
+3. 다운로드 형식 선택
+4. 다운로드 버튼 클릭","다운로드 모달 열림 → 파일 다운로드 시작",P2,일치
+SCR-37,서면 작성 — 버전 기록 패널,/case-list/editor?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG,로그인 상태; 검토 요청 이력 존재,"1. 버전 기록 버튼 클릭","버전 기록 패널 열림, 이전 버전과 현재 버전 Diff 표시",P2,일치
+SCR-38,서면 작성 — 디테일 수정 패널,/case-list/editor?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG,로그인 상태,"1. 디테일 수정 버튼 클릭","디테일 수정 패널 열림, 제출 정보(제출일, 담당 변호사 등) 편집 가능",P2,일치
+SCR-39,서면 작성 — 메모 패널,/case-list/editor?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG,로그인 상태,"1. 메모 패널 열기
+2. 텍스트 드래그 후 메모 추가","메모 패널 열림, 메모 작성·저장 가능",P3,일치
+SCR-40,서면 작성 — 목차 패널,/case-list/editor?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG,로그인 상태,"1. 목차 버튼 클릭 (열기)
+2. 목차 버튼 재클릭 (닫기)","목차 패널 열림/닫힘 토글 정상 동작",P3,일치
+SCR-41,증거 목록 — 정상 업로드,/evidence/list,로그인 상태,"1. /evidence/list 접속
+2. 업로드 버튼 클릭 (UploadModal 열기)
+3. PDF 파일(10MB) 선택
+4. 업로드 버튼 클릭","모달 열림 → 파일 업로드 성공 → 모달 닫힘 → 목록 갱신",P1,코드만
+SCR-42,증거 목록 — 파일 형식 오류 업로드,/evidence/list,로그인 상태,"1. 업로드 모달 열기
+2. .docx 파일 선택 시도 (PDF 전용)","PDF 외 형식 파일 차단, 오류 메시지 표시",P1,코드만
+SCR-43,증거 목록 — 용량 초과 업로드,/evidence/list,로그인 상태,"1. 업로드 모달 열기
+2. 500MB 초과 PDF 선택","'크기 제한(500MB)을 초과합니다.' 메시지, 업로드 차단 및 파일 항목에 오류 표시",P1,코드만
+SCR-44,증거 목록 — 업로드 모달 닫기,/evidence/list,로그인 상태,"1. 업로드 모달 열기
+2. X 버튼 또는 취소 클릭","모달 닫힘, 업로드 중단",P2,코드만
+SCR-45,증거 PDF 뷰어,/evidence/pdf/cdoc_01KK089FYR0HD07J1580F1VXPD,로그인 상태; DOCUMENT_ID 데이터 존재,"1. /evidence/pdf/cdoc_01KK089FYR0HD07J1580F1VXPD 접속
+2. PDF 로딩 확인","PDF 렌더링 완료, 페이지 표시",P1,코드만
+SCR-46,사건 문서 뷰어,/evidence/case-viewer/cdoc_01KK089FYR0HD07J1580F1VXPD,로그인 상태; DOCUMENT_ID 데이터 존재,"1. /evidence/case-viewer/cdoc_01KK089FYR0HD07J1580F1VXPD 접속","CaseViewerPage 렌더링, PDF 또는 텍스트 로딩",P1,코드만
+SCR-47,사건 탭 뷰어,/evidence/case-tap/cdoc_01KK089FYR0HD07J1580F1VXPD,로그인 상태; DOCUMENT_ID 데이터 존재,"1. /evidence/case-tap/cdoc_01KK089FYR0HD07J1580F1VXPD 접속","CaseTapPage 렌더링",P2,코드만
+SCR-48,요약 텍스트 뷰어,/evidence/summary/cdoc_01KK089FYR0HD07J1580F1VXPD,로그인 상태; DOCUMENT_ID 데이터 존재,"1. /evidence/summary/cdoc_01KK089FYR0HD07J1580F1VXPD 접속","EvidenceSummaryViewer 렌더링, 요약 내용 표시",P2,코드만
+SCR-49,요약 PDF 뷰어,/evidence/summaryPdf/cdoc_01KK089FYR0HD07J1580F1VXPD,로그인 상태; DOCUMENT_ID 데이터 존재,"1. /evidence/summaryPdf/cdoc_01KK089FYR0HD07J1580F1VXPD 접속","EvidenceSummaryPdfPage 렌더링",P2,코드만
+SCR-50,텍스트(OCR) 뷰어,/evidence/text/cdoc_01KK089FYR0HD07J1580F1VXPD,로그인 상태; DOCUMENT_ID 데이터 존재,"1. /evidence/text/cdoc_01KK089FYR0HD07J1580F1VXPD 접속","EvidenceTextViewer 렌더링, OCR 텍스트 표시",P2,코드만
+SCR-51,AI 분석 화면,/ai,로그인 상태,"1. /ai 접속 또는 홈 AI 탭 클릭
+2. 왼쪽 카테고리·메뉴 목록 로딩 확인
+3. 메뉴 항목 클릭","메뉴 로딩 완료, 클릭한 메뉴의 HTML/MD 파일 오른쪽 영역에 렌더링",P1,코드만
+SCR-52,AI 분석 — 메뉴 선택,/ai?project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG,로그인 상태; project_id 파라미터 존재,"1. /ai?project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG 접속
+2. 카테고리 확인
+3. 메뉴 항목 클릭","project_id 기반 메뉴 로딩, 선택 메뉴 파일 렌더링",P1,코드만
+SCR-53,세팅 화면,/settings,로그인 상태,"1. /settings 접속 또는 사이드바 설정 아이콘 클릭","SettingTable 렌더링, 설정 항목 표시",P2,코드만
+SCR-54,세팅 — 폼 정상 저장,/settings,로그인 상태,"1. 설정 변경 (예: 폰트 크기 조정)
+2. 저장 버튼 클릭","설정 저장 완료 메시지, 변경사항 즉시 반영",P2,코드만
+SCR-55,세팅 — 필수 값 누락,/settings,로그인 상태,"1. 필수 설정 항목 비워두고 저장","필수 항목 오류 메시지, 저장 차단",P2,코드만
+SCR-56,알림 화면,/notifications,로그인 상태,"1. /notifications 접속","NotificationTable 렌더링, 알림 목록 표시",P2,코드만
+SCR-57,결제관리 화면,/payment,로그인 상태,"1. /payment 접속","PaymentTable 렌더링, 결제 내역 표시",P2,코드만
+SCR-58,결제관리 — 결제 모달,/payment,로그인 상태,"1. 결제 버튼 클릭 (모달 열기)
+2. 결제 수단 선택
+3. 결제 확인 클릭","결제 모달 열림 → 결제 처리 → /billing/success 또는 /billing/fail 이동",P2,코드만
+SCR-59,구독관리 화면,/subscription,로그인 상태,"1. /subscription 접속","SubscriptionTable 렌더링, 구독 플랜 표시",P2,코드만
+SCR-60,메모관리 화면,/memo,로그인 상태,"1. /memo 접속","MemoPage 렌더링 (현재 빈 컴포넌트이므로 빈 화면 표시 확인)",P3,코드만
+SCR-61,결제 성공 콜백,/billing/success,로그인 상태; 결제 완료 후 리다이렉트,"1. 결제 완료 후 /billing/success 자동 이동","BillingSuccessPage 렌더링, 성공 메시지 표시",P2,코드만
+SCR-62,결제 실패 콜백,/billing/fail,로그인 상태; 결제 실패 후 리다이렉트,"1. 결제 실패 후 /billing/fail 자동 이동","BillingFailPage 렌더링, 실패 메시지 및 재시도 안내 표시",P2,코드만
+SCR-63,어드민 메인,/,어드민 계정 로그인 상태,"1. 어드민 계정으로 로그인 후 / 접속","AdminHomePage 렌더링, 어드민 대시보드 표시",P1,코드만
+SCR-64,어드민 증거 PDF 뷰어,/admin/evidence/pdf/cdoc_01KK089FYR0HD07J1580F1VXPD,어드민 로그인 상태,"1. /admin/evidence/pdf/cdoc_01KK089FYR0HD07J1580F1VXPD 접속","AdminEvidenceViewer 렌더링, PDF 표시",P1,코드만
+SCR-65,어드민 증거 OCR 뷰어,/admin/evidence/text/cdoc_01KK089FYR0HD07J1580F1VXPD,어드민 로그인 상태,"1. /admin/evidence/text/cdoc_01KK089FYR0HD07J1580F1VXPD 접속","AdminEvidenceTextViewer 렌더링, OCR 텍스트 표시",P1,코드만
+SCR-66,어드민 문서 PDF 뷰어,/admin/evidence-document/pdf/cdoc_01KK089FYR0HD07J1580F1VXPD,어드민 로그인 상태,"1. /admin/evidence-document/pdf/cdoc_01KK089FYR0HD07J1580F1VXPD 접속","AdminViewer 렌더링",P2,코드만
+SCR-67,어드민 문서 텍스트 뷰어,/admin/evidence-document/text/cdoc_01KK089FYR0HD07J1580F1VXPD,어드민 로그인 상태,"1. /admin/evidence-document/text/cdoc_01KK089FYR0HD07J1580F1VXPD 접속","AdminTextViewer 렌더링",P2,코드만
+SCR-68,어드민 증거목록 미리보기,/admin/evidence-preview,어드민 로그인 상태,"1. /admin/evidence-preview 접속","EvidencePreviewPage 렌더링, 사용자 증거목록 미리보기 표시",P2,코드만
+SCR-69,어드민 AI화면 미리보기,/admin/ai-preview,어드민 로그인 상태,"1. /admin/ai-preview 접속","AIPreviewPage 렌더링",P2,코드만
+SCR-70,404 페이지,/nonexistent-path,로그인/비로그인 무관,"1. 존재하지 않는 경로 접속 (예: /nonexistent-path)","NotFoundPage 렌더링, 404 안내 메시지 표시",P3,코드만
+SCR-71,하이라이트로 자료 요청,/case-list?civil_case_id=ccase_01KJ9BX7N9407DKCQ2SMNT6XC8&project_id=prj_01KJ9BX7GMEGDP0XARME8DR3RG&tab=editor,로그인 상태; 서면 작성 에디터 진입,"1. 문서 뷰어에서 텍스트 드래그로 하이라이트 생성
+2. '하이라이트로 요청하기' 클릭","하이라이트 요청 모달 열림, 요청 전송 가능",P2,일치
+SCR-72,증거 검색,/evidence/search,로그인 상태,"1. /evidence/search 접속
+2. 검색어 입력","EvidenceMainPage 검색 탭 렌더링, 검색 결과 표시",P2,코드만

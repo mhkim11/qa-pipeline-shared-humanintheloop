@@ -21,3 +21,17 @@
 - 샘플 PDF: sample_file.pdf (Claude Code 사용 가이드 — 파이프라인 설정 문서, 4페이지)
 - 산출물: spec_draft.md, qa_scenarios.csv, qa_definition.md, mismatch_report.md
 - 상태: 완료
+
+---
+
+## 2603082329 — softplant-shk-evidence-frontend-b8982d297de8.zip, Figma 키 BD1dtm9YOZJmMOlqm5eaQA, 샘플문서 1개
+
+- 실행일시: 2026-03-08 23:29
+- ZIP: softplant-shk-evidence-frontend-b8982d297de8.zip (기 압축 해제 상태)
+- Figma 파일키: BD1dtm9YOZJmMOlqm5eaQA
+- Figma 페이지: v2.3 하이라이팅 (주요 디자인 페이지 사용)
+- Figma 프레임 다운로드: 18개 (기록목록_검색결과, 전체자료_탭, 자료요청_탭, 의뢰인_제출화면, 기타자료_제출하기, 문서작성_목록, 문서작성_문서생성, 서면_생성하기, 서면작성_검토요청, 서면작성_증거첨부, 문서이름바꾸기_모달, 다운로드_모달, 서면작성_디테일수정, 서면작성_버전기록, 자료목록_탭, 서면작성_메인, 문서뷰어_컨테이너, 하이라이트_요청하기)
+- 샘플 PDF: sample_file.pdf (Claude Code 사용 가이드 — 파이프라인 파일 전달·MD 지시문 수정·자동 구성도 업데이트, 4페이지)
+- 산출물: spec_draft.md, qa_scenarios.csv, qa_definition.md, mismatch_report.md
+- 이전 RUN(2603082313) 무시하고 새로 시작
+- 상태: 완료
