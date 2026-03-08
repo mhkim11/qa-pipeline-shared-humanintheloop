@@ -5,14 +5,9 @@ SCR-02,성공,,,,4.1초
 SCR-03,성공,,,,3.5초
 SCR-04,성공,,,,2.9초
 SCR-05,성공,,,,3.1초
-SCR-06,실패,저장 버튼 클릭 후 500 Internal Server Error 응답,"1. 편집자 탭 진입
-2. 서면 작성 버튼 클릭
-3. 텍스트 입력
-4. 저장 클릭 → 에러 토스트 표시",screenshots/SCR-06_failure.png,8.4초
+SCR-06,실패,저장 버튼 클릭 후 500 Internal Server Error 응답,1. 편집자 탭 진입 → 2. 서면 작성 버튼 클릭 → 3. 텍스트 입력 → 4. 저장 클릭,screenshots/SCR-06_failure.png,8.4초
 SCR-07,성공,,,,3.8초
-SCR-08,블로킹,PDF 뷰어 로드 후 페이지 이동 버튼 미동작,"1. PDF 뷰어 진입
-2. 다음 페이지 버튼 클릭
-3. 페이지 변경 없음",screenshots/SCR-08_blocking.png,12.1초
+SCR-08,블로킹,PDF 뷰어 로드 후 페이지 이동 버튼 미동작,1. PDF 뷰어 진입 → 2. 다음 페이지 버튼 클릭 → 3. 페이지 변경 없음,screenshots/SCR-08_blocking.png,12.1초
 SCR-09,성공,,,,5.2초
 SCR-10,성공,,,,6.7초
 SCR-11,성공,,,,2.3초

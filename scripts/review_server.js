@@ -16,7 +16,7 @@ const STEP1_BASE = path.join(BASE, 'output', 'step1');
 const STEP2_BASE = path.join(BASE, 'output', 'step2');
 const FIGMA_BASE = path.join(BASE, 'input', 'figma_frames');
 const IMG_EXTS = new Set(['.png', '.jpg', '.jpeg', '.webp']);
-const RUN_PATTERN = /^\d{10}$/;
+const RUN_PATTERN = /^(\d{10}|sample)$/;
 
 // ── Step 1 디렉토리 헬퍼 ──────────────────────────────────
 
@@ -52,19 +52,32 @@ function getStep2Dir(runId) {
 // ── CSV ──────────────────────────────────────────────────
 
 function parseCSV(text) {
-  const lines = text.trim().split('\n');
-  if (!lines.length) return { headers: [], rows: [] };
-  const parseLine = line => {
-    const fields = []; let cur = ''; let q = false;
-    for (const c of line) {
-      if (c === '"') { q = !q; }
-      else if (c === ',' && !q) { fields.push(cur); cur = ''; }
+  // RFC 4180 compliant parser — handles quoted multiline fields
+  const rows = [];
+  let cur = '', fields = [], q = false;
+  const push = () => { fields.push(cur); cur = ''; };
+  const t = text.trim();
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (q) {
+      if (c === '"') {
+        if (t[i + 1] === '"') { cur += '"'; i++; } // escaped quote
+        else q = false;
+      } else {
+        cur += c;
+      }
+    } else {
+      if (c === '"') { q = true; }
+      else if (c === ',') { push(); }
+      else if (c === '\n') { push(); rows.push(fields); fields = []; }
+      else if (c === '\r') { /* skip */ }
       else cur += c;
     }
-    fields.push(cur);
-    return fields.map(f => f.trim());
-  };
-  return { headers: parseLine(lines[0]), rows: lines.slice(1).map(parseLine) };
+  }
+  push();
+  if (fields.some(f => f) || cur) rows.push(fields);
+  if (!rows.length) return { headers: [], rows: [] };
+  return { headers: rows[0].map(f => f.trim()), rows: rows.slice(1).map(r => r.map(f => f.trim())) };
 }
 
 function serializeCSV({ headers, rows }) {
@@ -644,18 +657,29 @@ function showSTab(idx, el) {
 function enhanceMismatch(frames) {
   const el = document.getElementById('s-mismatch');
 
-  el.querySelectorAll('h2, h3').forEach(h => {
-    if (h.textContent.includes('동적 경로 ID')) {
-      h.innerHTML += '<span class="badge-info">Step 2 이후 자동 업데이트</span>';
+  // 동적 경로 ID 미확보 섹션: 노란 배경 + 직접 수정 안내 (자동 업데이트 배지 제거)
+  let inDynamicSection = false;
+  el.querySelectorAll('h2, h3, li, p').forEach(node => {
+    const tag = node.tagName.toLowerCase();
+    if ((tag === 'h2' || tag === 'h3') && node.textContent.includes('동적 경로 ID')) {
+      inDynamicSection = true;
+      node.style.cssText += 'background:#fffbe6;padding:4px 8px;border-left:3px solid #f0c040;';
+      return;
+    }
+    if ((tag === 'h2' || tag === 'h3') && inDynamicSection) { inDynamicSection = false; return; }
+    if ((tag === 'li' || tag === 'p') && inDynamicSection) {
+      node.style.cssText += 'background:#fffbe6;padding:3px 8px;border-radius:3px;';
     }
   });
 
+  // SCR-XX → 강조 + 시나리오 삭제 버튼
   el.querySelectorAll('li, p').forEach(node => {
     node.innerHTML = node.innerHTML.replace(/\\b(SCR-\\d+)\\b/g, (match) => {
       return \`<strong>\${match}</strong> <button class="btn-sm btn-del" onclick="deleteScenario('\${match}')">시나리오 삭제</button>\`;
     });
   });
 
+  // 피그마에만 있는 화면: 해당 이미지 인라인 표시
   if (!frames.length) return;
   let inFigmaSection = false;
   el.querySelectorAll('h2, h3, li, p').forEach(node => {
@@ -663,27 +687,25 @@ function enhanceMismatch(frames) {
     if ((tag === 'h2' || tag === 'h3') && node.textContent.includes('피그마에만 있는 화면')) {
       inFigmaSection = true; return;
     }
-    if ((tag === 'h2' || tag === 'h3') && inFigmaSection) {
-      inFigmaSection = false; return;
-    }
+    if ((tag === 'h2' || tag === 'h3') && inFigmaSection) { inFigmaSection = false; return; }
     if ((tag === 'li' || tag === 'p') && inFigmaSection) {
       const text = node.textContent;
-      const filenameMatch = text.match(/프레임[:\\s]+[\\w가-힣.\\-_]+\\.(?:png|jpg|jpeg|webp)/i)
+      // 1순위: 파일명 직접 명시 ("프레임: 14_payment.png" 형태)
+      const filenameMatch = text.match(/프레임[:\\s]+([\\w가-힣.\\-_]+\\.(?:png|jpg|jpeg|webp))/i)
         || text.match(/\`([\\w가-힣.\\-_]+\\.(?:png|jpg|jpeg|webp))\`/i);
       let matched = filenameMatch ? frames.find(f => f === filenameMatch[1]) : null;
-
+      // 2순위: 키워드 매칭
       if (!matched) {
         const keywords = text.toLowerCase().replace(/[^a-z0-9가-힣]/g, ' ').split(/\\s+/).filter(k => k.length > 1);
         matched = frames.find(f => keywords.some(k => f.toLowerCase().includes(k)));
       }
-
       if (matched) {
         const img = document.createElement('div');
         img.className = 'figma-item';
         img.style.marginTop = '8px';
         img.innerHTML = \`
           <div class="figma-item-name">\${matched}</div>
-          <img src="/figma-frame/\${encodeURIComponent(matched)}" loading="lazy" onclick="openLightbox(this.src)">\`;
+          <img src="/figma-frame/\${encodeURIComponent(matched)}?run=\${encodeURIComponent(currentRun)}" loading="lazy" onclick="openLightbox(this.src)">\`;
         node.after(img);
       }
     }
