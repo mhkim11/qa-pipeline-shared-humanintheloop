@@ -372,6 +372,7 @@ const HTML = `<!DOCTYPE html>
     <div class="sidebar-tabs">
       <div class="stab active" onclick="showSTab(0, this)">불일치 리포트</div>
       <div class="stab" onclick="showSTab(1, this)">기획서 초안</div>
+      <div class="stab" onclick="showSTab(2, this)">Figma 프레임</div>
     </div>
     <div class="sidebar-pane active md" id="s-mismatch">
       <div class="loading">불러오는 중...</div>
@@ -382,6 +383,9 @@ const HTML = `<!DOCTYPE html>
       </div>
       <div class="md" id="s-spec-view"><div class="loading">불러오는 중...</div></div>
       <textarea id="s-spec-editor" class="def-editor" style="display:none;height:calc(100vh - 160px);width:100%;box-sizing:border-box"></textarea>
+    </div>
+    <div class="sidebar-pane" id="s-figma-frames">
+      <div class="loading">불러오는 중...</div>
     </div>
   </div>
 
@@ -522,8 +526,8 @@ function loadRun(runId) {
 
       fetch(\`/api/figma-frames?\${runId ? 'run=' + runId : ''}\`)
         .then(r => r.json())
-        .then(frames => enhanceMismatch(frames))
-        .catch(() => enhanceMismatch([]));
+        .then(frames => { enhanceMismatch(frames); renderFigmaFramesTab(frames); })
+        .catch(() => { enhanceMismatch([]); renderFigmaFramesTab([]); });
     })
     .catch(() => toast('데이터 로드 실패.', 'error'));
 }
@@ -696,6 +700,23 @@ function enhanceMismatch(frames) {
       <img src="/figma-frame/\${encodeURIComponent(fname)}?run=\${encodeURIComponent(currentRun)}" loading="lazy" onclick="openLightbox(this.src)" style="max-height:120px">\`;
     code.after(div);
   });
+}
+
+function renderFigmaFramesTab(frames) {
+  const el = document.getElementById('s-figma-frames');
+  if (!frames.length) {
+    el.innerHTML = '<div class="empty-msg">다운로드된 Figma 프레임이 없습니다.</div>';
+    return;
+  }
+  el.innerHTML = \`<div style="font-size:12px;color:#666;margin-bottom:8px">\${frames.length}개 프레임</div>\` +
+    frames.map(fname =>
+      \`<div class="figma-item" style="margin-bottom:12px">
+        <div class="figma-item-name" style="font-size:11px;color:#555;margin-bottom:4px">\${fname}</div>
+        <img src="/figma-frame/\${encodeURIComponent(fname)}?run=\${encodeURIComponent(currentRun)}"
+          loading="lazy" onclick="openLightbox(this.src)"
+          style="max-width:100%;max-height:160px;cursor:pointer;border:1px solid #ddd;border-radius:4px">
+      </div>\`
+    ).join('');
 }
 
 function deleteScenario(scenarioId) {

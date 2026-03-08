@@ -53,7 +53,12 @@ git -C ~/qa-pipeline_humanintheloop pull origin main
 5. 기획서 기반으로 화면별 QA 시나리오 생성 — **코드에서 발견 가능한 모든 시나리오를 빠짐없이 도출**
    - 로그인 시나리오(SCR-00) 반드시 포함
    - 동적 경로 전제조건에 `pipeline_config.md`의 테스트 데이터 ID 사용
-   - 대응하는 ID가 없는 동적 경로는 플레이스홀더로 대체 (AI 판단 규칙 6번 참고)
+   - 대응하는 ID가 없는 동적 경로는 파라미터 이름 패턴으로 아래 **실제 값**을 사용 (AI 판단 규칙 6번 참고):
+     - `evidenceId`, `documentId`, `docId` → `pipeline_config.md`의 `DOCUMENT_ID` 실제 값
+     - `caseId`, `civilCaseId`, `civil_case_id` → `pipeline_config.md`의 `CIVIL_CASE_ID` 실제 값
+     - `projectId`, `project_id` → `pipeline_config.md`의 `PROJECT_ID` 실제 값
+     - 위 패턴에도 해당하지 않으면 플레이스홀더(예: `SAMPLE_XXX_ID`)로 대체
+   - **데모(demo) 화면을 포함한 라우터에 등록된 모든 경로는 예외 없이 시나리오 생성** — "QA 불필요" 등 자체 판단으로 제외하지 말 것
    - **아래 항목은 각각 독립 시나리오로 반드시 분리**:
      - 라우터에 등록된 모든 경로(route) → 경로 1개당 최소 시나리오 1개
      - 동일 URL의 탭/섹션 → 탭 1개당 1개
@@ -110,9 +115,11 @@ git -C ~/qa-pipeline_humanintheloop pull origin main
    - 기록 형식: 피그마 프레임 파일명(`input/figma_frames/$RUN_ID/` 저장 시 사용한 파일명)을 **반드시 백틱(`)으로 감싸서 기재**
    - 예시: `온보딩 화면 — 피그마 프레임: \`온보딩.png\` / 코드 없음 → 미구현으로 제외`
    - 피그마에만 있는 화면이 없더라도 섹션 자체는 유지하고 "해당 없음"으로 명시
-6. 동적 경로 ID 확보 실패 시 → 플레이스홀더(예: SAMPLE_CASE_ID)로 대체 후 `mismatch_report.md` 에 기록
-   - 발생 조건: 코드에서 발견된 동적 경로인데 `pipeline_config.md`의 테스트 데이터 ID에 대응값이 없는 경우
-   - 검수자가 Step 1 검수 UI에서 실제 ID를 직접 입력하여 수정
+6. 동적 경로 ID 처리 우선순위:
+   1. `pipeline_config.md`에 매핑값이 있으면 그 값 사용
+   2. 없으면 파라미터 이름 패턴으로 `pipeline_config.md`의 실제 값 대입 (`evidenceId`→`DOCUMENT_ID` 실제 값, `caseId`→`CIVIL_CASE_ID` 실제 값, `projectId`→`PROJECT_ID` 실제 값)
+   3. 그래도 매핑 불가인 경우에만 플레이스홀더(예: `SAMPLE_XXX_ID`)로 대체 후 `mismatch_report.md`에 기록
+   - 검수자가 Step 1 검수 UI에서 플레이스홀더를 실제 ID로 직접 수정
 7. 동일 URL에 탭으로 구분된 화면 → 탭별로 별도 시나리오로 분리
 8. 우선순위 기준:
    - P1: 핵심 플로우 (로그인, 사건 생성, 서면 작성)
